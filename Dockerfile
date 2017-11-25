@@ -12,6 +12,9 @@ RUN ln -s /app/github-api-client-${version}-standalone.jar /app/app.jar
 ENV PORT ${port}
 ENV GH_API_URL https://api.github.com/graphql
 ENV GH_API_TOKEN DUMMY
+ENV GH_ORG obergner
+ENV GH_REPO camelpe
+ENV GH_PRS_LAST 3
 
 EXPOSE ${port}
 

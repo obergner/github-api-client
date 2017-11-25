@@ -1,5 +1,6 @@
 (ns github-api-client.task
-  (:require [github-api-client.event-log :as event-log]
+  (:require [github-api-client.conf :as conf]
+            [github-api-client.event-log :as event-log]
             [schejulure.core :as sched]
             [clojure.tools.logging :as log]))
 
@@ -14,8 +15,9 @@
                                  (do
                                    (log/infof "Scheduling event logger to run each minute")
                                    (sched/schedule {:hour (range 0 24) :minute (range 0 60)}
-                                                   #(event-log/log-last-pull-requests "tensorflow" "tensorflow" 5))
-                                   )
+                                                   #(event-log/log-last-pull-requests (:gh-org conf/config)
+                                                                                      (:gh-repo conf/config)
+                                                                                      (:gh-prs-last conf/config))))
                                  s)))
   nil)
 
