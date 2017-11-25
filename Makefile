@@ -7,6 +7,9 @@ APP_NAME := "github-api-client"
 # Grep version from project.clj
 VERSION := $(shell ./version.sh)
 
+# Read our secret access token from profiles.clj
+ACCESS_TOKEN := $(shell cat profiles.clj | sed -n 's/.*:gh-api-token "\(.*\)".*/\1/p')
+
 # Default goal 
 .DEFAULT_GOAL := build
 
@@ -37,6 +40,7 @@ build: test package
 run: ## Run container
 	docker run -i -t --rm \
          --env-file=./config.env \
+         --env=GH_API_TOKEN=$(ACCESS_TOKEN) \
          --publish=$(PORT):$(PORT) \
          --name="$(APP_NAME)" \
          $(APP_NAME):$(VERSION)

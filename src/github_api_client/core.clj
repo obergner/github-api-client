@@ -1,6 +1,8 @@
 (ns github-api-client.core
   (:require [environ.core :as env]
             [github-api-client.task :as task]
+            [github-api-client.storage :as storage]
+            [github-api-client.conf :as conf]
             [clojure.tools.logging :as log])
   (:gen-class))
 
@@ -42,4 +44,5 @@
   "Start application"
   [& args]
   (log-startup-banner)
-  (task/schedule-event-log))
+  (storage/start-rocksdb conf/config)
+  (task/schedule-event-log conf/config))

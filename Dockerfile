@@ -1,4 +1,4 @@
-FROM openjdk:8u131-jre-alpine
+FROM openjdk:8u151-jre-slim
 MAINTAINER Olaf Bergner <olaf.bergner@gmx.de>
 
 ARG version
@@ -15,6 +15,7 @@ ENV GH_API_TOKEN DUMMY
 ENV GH_ORG obergner
 ENV GH_REPO camelpe
 ENV GH_PRS_LAST 3
+ENV ROCKSDB_PATH /app/db
 
 EXPOSE ${port}
 

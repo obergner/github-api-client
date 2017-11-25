@@ -5,17 +5,11 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-environ "1.1.0"]]
   :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/core.async "0.3.465"]
                  [clj-http "3.7.0"]
                  [cheshire "5.8.0"]
                  [environ "1.1.0"]
-                 [org.mapdb/mapdb "3.0.5" :exclusions [org.eclipse.collections/eclipse-collections
-                                                       org.eclipse.collections/eclipse-collections-api
-                                                       org.eclipse.collections/eclipse-collections-forkjoin
-                                                       com.google.guava/guava]]
-                 [org.eclipse.collections/eclipse-collections-api "7.1.1"]
-                 [org.eclipse.collections/eclipse-collections "7.1.1"]
-                 [org.eclipse.collections/eclipse-collections-forkjoin "7.1.1"]
-                 [com.google.guava/guava "19.0"]
+                 [org.rocksdb/rocksdbjni "5.8.6"]
                  [schejulure "1.0.1"]
                  [ring/ring-jetty-adapter "1.6.3"]
                  [org.clojure/tools.logging "0.4.0"]
@@ -32,17 +26,20 @@
   :env {:gh-api-url "https://api.github.com/graphql"
         :gh-org "tensorflow"
         :gh-repo "tensorflow"
-        :gh-prs-last "5"}
+        :gh-prs-last "5"
+        :rocksdb-path "./.prod.db"}
   :profiles {:dev [:dev-public :dev-private]
              :dev-public {:env {:gh-api-url "https://api.github.com/graphql"
                                 :gh-org "tensorflow"
                                 :gh-repo "tensorflow"
-                                :gh-prs-last "5"}
+                                :gh-prs-last "5"
+                                :rocksdb-path "./target/dev.db"}
                           :resource-paths ["test-resources"]}
              :dev-private {:env {:gh-api-token "overridden-in-profile.clj"}}
              :test {:env {:gh-api-url "http://localhost:3000/graphql"
                           :gh-api-token "test-api-token"
                           :gh-org "tensorflow"
                           :gh-repo "tensorflow"
-                          :gh-prs-last "5"}}
+                          :gh-prs-last "5"
+                          :rocksdb-path "./target/test.db"}}
              :uberjar {:aot :all}})

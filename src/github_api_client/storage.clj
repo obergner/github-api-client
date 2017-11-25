@@ -1,39 +1,63 @@
 (ns github-api-client.storage
   (:require [github-api-client.conf :as conf]
+            [clojure.core.async :as async]
             [clojure.tools.logging :as log])
-  (:import (org.mapdb DBMaker)))
+  (:import (org.rocksdb RocksDB Options)))
 
-(def ^:private db-instance (atom nil))
+;; RocksDB layer, the new hotness
 
-(defn- make-memory-db
-  "Create an in-memory, off-heap MapDB instance"
-  []
-  (-> (DBMaker/memoryDB)
-      (.make)))
+(def ^:private dbchan (async/chan 10))
 
-(defn- db
-  "Return this application's singleton MapDB instance,
-  optionally creating it if it does not exist"
-  []
-  (swap! db-instance (fn [d]
-                       (if d d (make-memory-db)))))
-
-(defn- map-db
-  "Return this application's singleton treeMap DB instance,
-  optionally creating it if it does not exist"
-  []
-  (-> (db)
-      (.hashMap "github-events")
-      (.createOrOpen)))
-
-(defn store
-  "Store 'value' in map db under key 'key'"
+(defn put
+  "Store `value` under `key` in backing store.
+  Returns `value`.
+  This function must not be called from an IOC thread but
+  only from a regular thread."
   [key value]
-  (-> (map-db)
-      (.put key value)))
+  (async/>!! dbchan [key value])
+  value)
 
-(defn get
-  "Get value associated with 'key', or nil"
-  [key]
-  (-> (map-db)
-      (.get key)))
+(defn- make-rocksdb
+  "Create a new `RocksDB` instance using the supplied `config`.
+  Return `[db options]`, where `db` is the newly created `RocksDB`
+  instance and `options` the `org.rocksdb.Options` instance used
+  to create `db`. Return `options` as well since it is backed by
+  a C++ object (off-heap) that needs to be closed."
+  [config]
+  (let [options (-> (Options.)
+                    (.setCreateIfMissing true))
+        dbpath (:rocksdb-path config ".default.db")
+        db (RocksDB/open options dbpath)]
+    (log/infof "Opened RocksDB instance [%s] located at [%s] using options [%s]" db dbpath options)
+    [db options]))
+
+(defn start-rocksdb
+  "Start a go routine that opens a new `RocksDB` instance using the supplied
+  `config` to initialise it, then loops waiting for key-value pairs to store.
+
+  If the go routine started by this function receives message `:terminate` on
+  `dbchan` it will shut down its `RocksDB` instance and terminate its loop."
+  [config]
+  (async/go
+    (log/infof "Starting RocksDB persistence service")
+    (let [db-options (make-rocksdb config)]
+      (with-open [db (first db-options)
+                  options (second db-options)]
+        (loop [msg (async/<! dbchan)]
+          (condp = msg
+            :terminate (do
+                         (log/infof "Received termination message - shutting down RocksDB instance [%s]" db))
+            (let [key (first msg)
+                  value (second msg)]
+              (-> db
+                  (.put (.getBytes key) (.getBytes value)))
+              (log/debugf "PUT: [%s] -> [%s]" key value)
+              (recur (async/<! dbchan)))))))
+    (log/infof "RocksDB persistence service stopped")))
+
+(defn stop-rocksdb
+  "Stop go routine managing our `RocksDB` instance, closing that instance.
+  Returns `true`."
+  []
+  (async/>!! dbchan :terminate)
+  true)

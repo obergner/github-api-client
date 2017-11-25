@@ -1,6 +1,5 @@
 (ns github-api-client.task
-  (:require [github-api-client.conf :as conf]
-            [github-api-client.event-log :as event-log]
+  (:require [github-api-client.event-log :as event-log]
             [schejulure.core :as sched]
             [clojure.tools.logging :as log]))
 
@@ -8,16 +7,17 @@
 
 (defn schedule-event-log
   "Start running even-log each minute if not yet started. Otherwise,
-  do nothing. Return nil."
-  []
+  do nothing. Use supplied `config` to initialise event logger.
+  Return nil."
+  [config]
   (swap! scheduled-event-log (fn [s]
                                (if (nil? s)
                                  (do
                                    (log/infof "Scheduling event logger to run each minute")
                                    (sched/schedule {:hour (range 0 24) :minute (range 0 60)}
-                                                   #(event-log/log-last-pull-requests (:gh-org conf/config)
-                                                                                      (:gh-repo conf/config)
-                                                                                      (:gh-prs-last conf/config))))
+                                                   #(event-log/log-last-pull-requests (:gh-org config)
+                                                                                      (:gh-repo config)
+                                                                                      (:gh-prs-last config))))
                                  s)))
   nil)
 
