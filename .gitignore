@@ -4,3 +4,4 @@
 /.lein-*
 /.nrepl-port
 /profiles.clj
+/token.sec

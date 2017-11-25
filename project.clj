@@ -23,9 +23,12 @@
                  [ch.qos.logback/logback-classic "1.2.3"]]
   :main ^:skip-aot github-api-client.core
   :target-path "target/%s"
+  :manifest {"Git-Branch" ~#(:out (clojure.java.shell/sh "git" "rev-parse" "--abbrev-ref" "HEAD") %)
+             "Git-Commit" ~#(:out (clojure.java.shell/sh "git" "rev-parse" "HEAD") %)
+             "Git-Dirty" ~#(:out (clojure.java.shell/sh "git" "rev-parse" "--abbrev-ref" "HEAD") %)}
   :profiles {:dev [:dev-public :dev-private]
              :dev-public {:env {:gh-api-url "https://api.github.com/graphql"}
-                          :resource-paths ["test-resources" "resources"]}
+                          :resource-paths ["test-resources"]}
              :dev-private {:env {:gh-api-token "overridden-in-profile.clj"}}
              :test {:env {:gh-api-url "http://localhost:3000/graphql"
                           :gh-api-token "test-api-token"}}
