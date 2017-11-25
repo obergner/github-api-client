@@ -16,6 +16,7 @@
                  [org.eclipse.collections/eclipse-collections "7.1.1"]
                  [org.eclipse.collections/eclipse-collections-forkjoin "7.1.1"]
                  [com.google.guava/guava "19.0"]
+                 [schejulure "1.0.1"]
                  [ring/ring-jetty-adapter "1.6.3"]
                  [org.clojure/tools.logging "0.4.0"]
                  [org.slf4j/slf4j-api "1.7.25"]
@@ -23,7 +24,8 @@
   :main ^:skip-aot github-api-client.core
   :target-path "target/%s"
   :profiles {:dev [:dev-public :dev-private]
-             :dev-public {:env {:gh-api-url "https://api.github.com/graphql"}}
+             :dev-public {:env {:gh-api-url "https://api.github.com/graphql"}
+                          :resource-paths ["test-resources" "resources"]}
              :dev-private {:env {:gh-api-token "overridden-in-profile.clj"}}
              :test {:env {:gh-api-url "http://localhost:3000/graphql"
                           :gh-api-token "test-api-token"}}

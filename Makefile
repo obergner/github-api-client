@@ -17,6 +17,7 @@ clean:
 	lein clean
 
 # Run tests
+.PHONY: test
 test:
 	lein test
 
@@ -36,7 +37,7 @@ build: test package
 run: ## Run container
 	docker run -i -t --rm \
          --env-file=./config.env \
-         --port=$(PORT):$(PORT) \
+         --publish=$(PORT):$(PORT) \
          --name="$(APP_NAME)" \
          $(APP_NAME):$(VERSION)
 

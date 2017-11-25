@@ -1,8 +1,8 @@
 (ns github-api-client.core
-  (:require [github-api-client.github-api :as api])
+  (:require [github-api-client.task :as task])
   (:gen-class))
 
 (defn -main
-  "I don't do a whole lot ... yet."
+  "Start application"
   [& args]
-  (println "Hello, World!"))
+  (task/schedule-event-log))

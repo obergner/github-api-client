@@ -33,46 +33,6 @@
        (log/debugf "[DONE] [%s] -> [%s]" fquery result)
        (:data result)))))
 
-;; Get repository info
-
-(def ^:private q-repository-names
-  "query($count: Int = 10) {
-    viewer {
-     name
-     repositories(last: $count) {
-       nodes {
-         name
-       }
-     }
-   }
-  }")
-
-(defn repository-names
-  "Get names of all repositories owned by this user"
-  [cnt]
-  (log/infof "Fetching basic repository info ...")
-  (let [repos (get-in (do-query q-repository-names {:count cnt}) [:viewer :repositories :nodes])]
-    (log/infof "[DONE] Fetched [%d] repositories" (count repos))
-    repos))
-
-;; Get organization info
-
-(def ^:private q-organization-info
-  "query($login: String!) {
-     organization(login: $login) {
-       name
-       url 
-     }
-  }")
-
-(defn organization-info
-  "Get basic info on organization identified by login 'login'"
-  [login]
-  (log/infof "Fetching basic organization info [login: %s] ..." login)
-  (let [org (do-query q-organization-info {:login login})]
-    (log/infof "[DONE] [%s] -> [%s]" login org)
-    org))
-
 ;; Get pull request info
 
 (def ^:private q-pull-request-info

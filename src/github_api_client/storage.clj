@@ -4,7 +4,6 @@
   (:import (org.mapdb DBMaker)))
 
 (def ^:private db-instance (atom nil))
-(def ^:private map-instance (atom nil))
 
 (defn- make-memory-db
   "Create an in-memory, off-heap MapDB instance"
@@ -32,3 +31,9 @@
   [key value]
   (-> (map-db)
       (.put key value)))
+
+(defn get
+  "Get value associated with 'key', or nil"
+  [key]
+  (-> (map-db)
+      (.get key)))
