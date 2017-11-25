@@ -23,9 +23,9 @@
                  [ch.qos.logback/logback-classic "1.2.3"]]
   :main ^:skip-aot github-api-client.core
   :target-path "target/%s"
-  :manifest {"Git-Branch" ~#(:out (clojure.java.shell/sh "git" "rev-parse" "--abbrev-ref" "HEAD") %)
-             "Git-Commit" ~#(:out (clojure.java.shell/sh "git" "rev-parse" "HEAD") %)
-             "Git-Dirty" ~#(:out (clojure.java.shell/sh "git" "rev-parse" "--abbrev-ref" "HEAD") %)}
+  :manifest {"Git-Branch" ~#(clojure.string/trim (:out (clojure.java.shell/sh "git" "rev-parse" "--abbrev-ref" "HEAD") %))
+             "Git-Commit" ~#(clojure.string/trim (:out (clojure.java.shell/sh "git" "rev-parse" "HEAD") %))
+             "Git-Dirty" ~#(str (not (empty? (clojure.string/trim (:out (clojure.java.shell/sh "git" "status" "--porcelain") %)))))}
   :profiles {:dev [:dev-public :dev-private]
              :dev-public {:env {:gh-api-url "https://api.github.com/graphql"}
                           :resource-paths ["test-resources"]}
