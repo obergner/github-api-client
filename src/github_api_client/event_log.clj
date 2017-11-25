@@ -4,15 +4,18 @@
             [cheshire.core :as json]
             [clojure.tools.logging :as log]))
 
-(defn log-last-pull-requests
-  "Retrieve `last` pull requests in repository `repo`
-  owned by organization `org` and log them in our DB.
-  Return key pull requests were stored under."
-  [org repo last]
-  (log/infof "Storing last [%d] pull requests in [organization: %s|repo: %s] in event log ..." last org last)
-  (let [pull-requests (api/pull-request-info org repo last)
-        key (str "pr:" org ":" repo ":" (System/currentTimeMillis))
-        value (json/generate-string pull-requests)]
-    (storage/put key value)
-    (log/infof "[DONE] Stored [%d] pull requests under key [%s]" (count pull-requests) key)
-    key))
+(defn pull-requests-logger
+  "Using supplied `config` create and return a function that takes
+  organization `org`, repository `repo` and number `last` and
+  looks up the latest `last` pull requests in `repo` belonging tools
+  `organization`, storing them in our event log."
+  [config]
+  (fn [org repo last]
+    (log/infof "Storing last [%d] pull requests in [organization: %s|repo: %s] in event log ..." last org last)
+    (let [pull-request-info (api/request-info-client config)
+          pull-requests (pull-request-info org repo last)
+          key (str "pr:" org ":" repo ":" (System/currentTimeMillis))
+          value (json/generate-string pull-requests)]
+      (storage/put key value)
+      (log/infof "[DONE] Stored [%d] pull requests under key [%s]" (count pull-requests) key)
+      key)))

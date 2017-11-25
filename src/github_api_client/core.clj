@@ -43,6 +43,7 @@
 (defn -main
   "Start application"
   [& args]
-  (log-startup-banner)
-  (storage/start-rocksdb conf/config)
-  (task/schedule-event-log conf/config))
+  (let [cnf (conf/config)]
+    (log-startup-banner)
+    (storage/start-rocksdb cnf)
+    (task/schedule-event-log cnf)))

@@ -15,9 +15,10 @@
                                  (do
                                    (log/infof "Scheduling event logger to run each minute")
                                    (sched/schedule {:hour (range 0 24) :minute (range 0 60)}
-                                                   #(event-log/log-last-pull-requests (:gh-org config)
-                                                                                      (:gh-repo config)
-                                                                                      (:gh-prs-last config))))
+                                                   #(let [log-prs (event-log/pull-requests-logger config)]
+                                                      (log-prs (:gh-org config)
+                                                               (:gh-repo config)
+                                                               (:gh-prs-last config)))))
                                  s)))
   nil)
 

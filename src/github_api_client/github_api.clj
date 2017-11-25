@@ -2,23 +2,22 @@
   (:require [clojure.string :as str]
             [cheshire.core :as json]
             [clj-http.client :as http]
-            [github-api-client.conf :as conf]
             [clojure.tools.logging :as log]))
 
 (defn- fmt-query
-  "Probably format GraphQL query 'query', eliminating line breaks
+  "Probably format GraphQL query `query`, eliminating line breaks
   since those are not allowed in a well-formed query"
   [query]
   (str/replace query #"\n" ""))
 
 (defn- do-query
-  "Issue 'query' to GitHub's GraphQL API, returning the response's body
+  "Issue `query` to GitHub's GraphQL API, returning the response's body
   as a JSON object"
-  ([query]
-   (do-query query nil))
-  ([query variables]
+  ([config query]
+   (do-query config query nil))
+  ([config query variables]
    (let [fquery (fmt-query query)
-         endpoint (:gh-api-url conf/config)
+         endpoint (:gh-api-url config)
          body (if variables
                 (format "{\"query\": \"%s\", \"variables\": %s}" fquery (json/generate-string variables))
                 (format "{\"query\": \"%s\"}" fquery))]
@@ -27,7 +26,7 @@
                            {:as :json
                             :content-type :json
                             :accept :json
-                            :headers {"authorization" (str "bearer " (:gh-api-token conf/config))}
+                            :headers {"authorization" (str "bearer " (:gh-api-token config))}
                             :body body})
            result (:body resp)]
        (log/debugf "[DONE] [%s] -> [%s]" fquery result)
@@ -57,12 +56,14 @@
      }
   }")
 
-(defn pull-request-info
-  "Get info on last 'last' pull requests in repository 'repo' belonging
-  to organization 'login'"
-  [login repo last]
-  (log/infof "Fetching pull request info [login: %s,repo: %s, last: %d] ..." login repo last)
-  (let [resp (do-query q-pull-request-info {:login login :repo repo :last last})
-        prs (map #(% :node) (get-in resp [:organization :repository :pullRequests :edges]))]
-    (log/infof "[DONE] [%s] -> [%s]" login prs)
-    prs))
+(defn request-info-client
+  "Using the supplied `config` create and return a function that takes
+  `login`, `repo` and `last` and returns the latest `last` pull requests
+  in repository `repo` belonging to the organization identified by `login`."
+  [config]
+  (fn [login repo last]
+    (log/infof "Fetching pull request info [login: %s,repo: %s, last: %d] ..." login repo last)
+    (let [resp (do-query config q-pull-request-info {:login login :repo repo :last last})
+          prs (map #(% :node) (get-in resp [:organization :repository :pullRequests :edges]))]
+      (log/infof "[DONE] [%s] -> [%s]" login prs)
+      prs)))

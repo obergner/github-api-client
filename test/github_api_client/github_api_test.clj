@@ -23,9 +23,11 @@
                                                                                :title "change bazel-mirror to mirror.bazel",
                                                                                :bodyText "hi i'm back , using only one email."}}]}}}}}})
 
-(t/deftest pull-request-info
+(t/deftest request-info-client
   (t/testing "last-three-pull-requests"
     (mock/respond-with last-three-prs)
-    (let [last 3
-          resp (sut/pull-request-info "tensorflow" "tensorflow" last)]
+    (let [config {:gh-api-url "http://localhost:3000/graphql" :gh-api-token "test-token"}
+          test-client (sut/request-info-client config)
+          last 3
+          resp (test-client "tensorflow" "tensorflow" last)]
       (t/is (= last (count resp ))))))

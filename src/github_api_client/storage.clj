@@ -1,6 +1,5 @@
 (ns github-api-client.storage
-  (:require [github-api-client.conf :as conf]
-            [clojure.core.async :as async]
+  (:require [clojure.core.async :as async]
             [clojure.tools.logging :as log])
   (:import (org.rocksdb RocksDB Options)))
 
