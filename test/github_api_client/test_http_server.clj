@@ -2,37 +2,31 @@
   (:require [ring.adapter.jetty :as ring]
             [cheshire.core :as json]
             [clojure.string :as string]
-            [clojure.java.io :as io]))
+            [clojure.tools.logging :as log]))
 
 (def ^:private mock-server (atom nil))
 
-(def ^:private last-req (atom nil))
+(def ^:private expectation (atom nil))
 
-(def ^:private next-resp (atom nil))
+(def ^:private default-response
+  {:status 503
+   :body (json/generate-string {:test-status "failed"})})
 
-(defn respond-with
-  "Instruct mock HTTP server to respond with 'response'
-  to next received request"
-  [response]
-  (swap! next-resp (constantly response)))
-
-(defn last-request
-  "Return last request received by mock HTTP server"
-  []
-  (let [lst-req @last-req]
-    (swap! last-req (constantly nil))
-    lst-req))
+(defn when-then
+  "Tell mock HTTP server to next expect an HTTP request matching
+  `request-pred`, a function that takes the received `Ring` request
+  and returns either `true` or `false`.
+  If the next received request matches return `Ring` response `success`."
+  [request-pred success]
+  (swap! expectation (constantly {:pred request-pred :resp success})))
 
 (defn- mock-handler
   [ring-request]
-  (let [nxt-resp @next-resp]
-    (swap! next-resp (constantly nil))
-    (swap! last-req (constantly ring-request))
-    (condp = [(:request-method ring-request) (:uri ring-request)]
-      [:post "/graphql"] {:status (:status nxt-resp)
-                          :headers (:headers nxt-resp)
-                          :body (json/generate-string (:body nxt-resp))}
-      {:status 404 :body ""})))
+  (let [{:keys [pred resp]} @expectation]
+    (log/debugf "RCVD: %s" ring-request)
+    (if (pred ring-request)
+      resp
+      default-response)))
 
 (defn with-mock-server
   [test-fn]
