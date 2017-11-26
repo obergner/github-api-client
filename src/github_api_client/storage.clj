@@ -22,12 +22,11 @@
   instance and `options` the `org.rocksdb.Options` instance used
   to create `db`. Return `options` as well since it is backed by
   a C++ object (off-heap) that needs to be closed."
-  [config]
+  [{:keys [rocksdb-path]}]
   (let [options (-> (Options.)
                     (.setCreateIfMissing true))
-        dbpath (:rocksdb-path config ".default.db")
-        db (RocksDB/open options dbpath)]
-    (log/infof "Opened RocksDB instance [%s] located at [%s] using options [%s]" db dbpath options)
+        db (RocksDB/open options rocksdb-path)]
+    (log/infof "Opened RocksDB instance [%s] located at [%s] using options [%s]" db rocksdb-path options)
     [db options]))
 
 (defn start-rocksdb
