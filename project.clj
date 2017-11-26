@@ -3,7 +3,8 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :plugins [[lein-environ "1.1.0"]]
+  :plugins [[lein-environ "1.1.0"]
+            [lein-marginalia "0.9.1"]]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.async "0.3.465"]
                  [clj-http "3.7.0"]
@@ -42,4 +43,5 @@
                           :gh-repo "tensorflow"
                           :gh-prs-last "5"
                           :rocksdb-path "./target/test.db"}}
-             :uberjar {:aot :all}})
+             :uberjar {:aot :all}}
+  :aliases {"doc" ["marg" "--dir" "./target/doc"]})

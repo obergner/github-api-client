@@ -28,6 +28,11 @@ test:
 package:
 	lein uberjar
 
+# Create documentation
+.PHONY: doc
+doc:
+	lein doc
+
 # DOCKER TASKS
 
 # Build the container
