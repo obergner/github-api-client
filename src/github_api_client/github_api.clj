@@ -5,8 +5,8 @@
             [clojure.tools.logging :as log]))
 
 (defn- fmt-query
-  "Probably format GraphQL query `query`, eliminating line breaks
-  since those are not allowed in a well-formed query"
+  "Properly format GraphQL query `query`, eliminating line breaks
+  since those are not allowed in a well-formed query."
   [query]
   (str/replace query #"\n" ""))
 
@@ -62,8 +62,8 @@
   in repository `repo` belonging to the organization identified by `login`."
   [config]
   (fn [login repo last]
-    (log/infof "Fetching pull request info [login: %s,repo: %s, last: %d] ..." login repo last)
+    (log/infof "Fetching last [%d] pull requests from [%s/%s] ..." last login repo)
     (let [resp (do-query config q-pull-request-info {:login login :repo repo :last last})
           prs (map #(% :node) (get-in resp [:organization :repository :pullRequests :edges]))]
-      (log/infof "[DONE] [%s] -> [%s]" login prs)
+      (log/infof "[DONE] [%s] -> [%d pull requests]" login (count prs))
       prs)))
