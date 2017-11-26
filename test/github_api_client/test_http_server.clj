@@ -18,7 +18,7 @@
   and returns either `true` or `false`.
   If the next received request matches return `Ring` response `success`."
   [request-pred success]
-  (swap! expectation (constantly {:pred request-pred :resp success})))
+  (reset! expectation {:pred request-pred :resp success}))
 
 (defn- mock-handler
   [ring-request]
