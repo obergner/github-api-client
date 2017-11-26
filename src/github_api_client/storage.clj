@@ -45,8 +45,7 @@
           (condp = msg
             :terminate (do
                          (log/infof "Received termination message - shutting down RocksDB instance [%s]" db))
-            (let [key (first msg)
-                  value (second msg)]
+            (let [[key value] msg]
               (-> db
                   (.put (.getBytes key) (.getBytes value)))
               (log/debugf "PUT: [%s] -> [%s]" key value)
