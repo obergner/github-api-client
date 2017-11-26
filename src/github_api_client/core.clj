@@ -3,7 +3,8 @@
             [github-api-client.task :as task]
             [github-api-client.storage :as storage]
             [github-api-client.conf :as conf]
-            [clojure.tools.logging :as log])
+            [clojure.tools.logging :as log]
+            [clojure.core.async :as async])
   (:gen-class))
 
 (defn- manifest-map
@@ -46,4 +47,5 @@
   (let [cnf (conf/config)]
     (log-startup-banner)
     (storage/start-rocksdb cnf)
-    (task/schedule-event-log cnf)))
+    (let [[_ stop-chan] (task/schedule-event-log cnf)]
+      (async/<!! stop-chan))))

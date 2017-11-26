@@ -1,32 +1,33 @@
 (ns github-api-client.task
   (:require [github-api-client.event-log :as event-log]
-            [schejulure.core :as sched]
+            [clojure.core.async :as async]
             [clojure.tools.logging :as log]))
 
-(def ^:private scheduled-event-log (atom nil))
-
 (defn schedule-event-log
-  "Start running even-log each minute if not yet started. Otherwise,
-  do nothing. Use supplied `config` to initialise event logger.
-  Return nil."
-  [config]
-  (swap! scheduled-event-log (fn [s]
-                               (if (nil? s)
-                                 (do
-                                   (log/infof "Scheduling event logger to run each minute")
-                                   (sched/schedule {:hour (range 0 24) :minute (range 0 60)}
-                                                   #(let [log-prs (event-log/pull-requests-logger config)]
-                                                      (log-prs (:gh-org config)
-                                                               (:gh-repo config)
-                                                               (:gh-prs-last config)))))
-                                 s)))
-  nil)
+  "Schedule `github-api-client.event-log/pull-requests-logger` to run every `log-interval-ms` milliseconds,
+  where `log-interval-ms` is the value associated with `:log-interval-ms` in the supplied configuration hash.
 
-(defn cancel-event-log
-  "Cancel event-log task if running. Otherwise, do nothing."
-  []
-  (when-let [task @scheduled-event-log]
-    (log/infof "Canceling event logger ...")
-    (future-cancel task)
-    (swap! scheduled-event-log (constantly nil))
-    (log/infof "[DONE] Event logger has been canceled")))
+  Return `[stop-fn stop-chan]` where
+
+   * `stop-fn` is a function that takes not arguments and cancels the scheduled event log when called, and
+   * `stop-chan` is a `clojure.core.async` `channel` that publishes exactly one message when this event-logger
+     shuts down.
+
+  The purpose of `stop-chan` is for the main thread to block on it so that the application does not exit
+  immediately."
+  [{:keys [log-interval-ms gh-org gh-repo gh-prs-last], :as config}]
+  (log/infof "START: log last [%d] pull requests in [%s/%s] every [%d] ms"
+             gh-prs-last gh-org gh-repo log-interval-ms)
+  (let [log-pull-requests (event-log/pull-requests-logger config)
+        should-run (atom true)
+        stop-chan (async/go
+                    (while @should-run
+                      (async/<! (async/timeout log-interval-ms))
+                      (when @should-run
+                        (try
+                          (log-pull-requests gh-org gh-repo gh-prs-last)
+                          (catch Exception e
+                            (log/errorf e "[IGNORED] Error while trying to log last [%d] pull requests in [%s/%s]: %s"
+                                        gh-prs-last gh-org gh-repo (.getMessage e))))))
+                    (log/infof "STOP: received request to stop event-log loop"))]
+    [#(reset! should-run false) stop-chan]))

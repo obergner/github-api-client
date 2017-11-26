@@ -2,9 +2,11 @@
   (:require [environ.core :refer [env]]))
 
 (defn config
-  "Return configuration hash"
+  "Read application configuration from environment variables and return
+  it as a hash."
   []
-  {:gh-api-url (env :gh-api-url)
+  {:log-interval-ms (read-string (env :log-interval-ms))
+   :gh-api-url (env :gh-api-url)
    :gh-api-token (env :gh-api-token)
    :gh-org (env :gh-org)
    :gh-repo (env :gh-repo)

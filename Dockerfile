@@ -10,6 +10,7 @@ COPY target/uberjar/github-api-client-${version}-standalone.jar /app/github-api-
 RUN ln -s /app/github-api-client-${version}-standalone.jar /app/app.jar
 
 ENV PORT ${port}
+ENV LOG_INTERVAL_MS 60000
 ENV GH_API_URL https://api.github.com/graphql
 ENV GH_API_TOKEN DUMMY
 ENV GH_ORG obergner

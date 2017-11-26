@@ -11,7 +11,6 @@
                  [cheshire "5.8.0"]
                  [environ "1.1.0"]
                  [org.rocksdb/rocksdbjni "5.8.6"]
-                 [schejulure "1.0.1"]
                  [ring/ring-jetty-adapter "1.6.3"]
                  [org.clojure/tools.logging "0.4.0"]
                  [org.slf4j/slf4j-api "1.7.25"]
@@ -24,20 +23,23 @@
              "Git-Branch" ~#(clojure.string/trim (:out (clojure.java.shell/sh "git" "rev-parse" "--abbrev-ref" "HEAD") %))
              "Git-Commit" ~#(clojure.string/trim (:out (clojure.java.shell/sh "git" "rev-parse" "HEAD") %))
              "Git-Dirty" ~#(str (not (empty? (clojure.string/trim (:out (clojure.java.shell/sh "git" "status" "--porcelain") %)))))}
-  :env {:gh-api-url "https://api.github.com/graphql"
+  :env {:log-interval-ms "30000"
+        :gh-api-url "https://api.github.com/graphql"
         :gh-org "tensorflow"
         :gh-repo "tensorflow"
         :gh-prs-last "5"
         :rocksdb-path "./.prod.db"}
   :profiles {:dev [:dev-public :dev-private]
-             :dev-public {:env {:gh-api-url "https://api.github.com/graphql"
+             :dev-public {:env {:log-interval-ms "1000"
+                                :gh-api-url "https://api.github.com/graphql"
                                 :gh-org "tensorflow"
                                 :gh-repo "tensorflow"
                                 :gh-prs-last "5"
                                 :rocksdb-path "./target/dev.db"}
                           :resource-paths ["test-resources"]}
              :dev-private {:env {:gh-api-token "overridden-in-profile.clj"}}
-             :test {:env {:gh-api-url "http://localhost:3000/graphql"
+             :test {:env {:log-interval-ms "10000"
+                          :gh-api-url "http://localhost:3000/graphql"
                           :gh-api-token "test-api-token"
                           :gh-org "tensorflow"
                           :gh-repo "tensorflow"
