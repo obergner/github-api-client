@@ -11,7 +11,7 @@
   `organization`, storing them in our event log."
   [config]
   (fn [org repo last]
-    (log/infof "Storing last [%d] pull requests in [organization: %s|repo: %s] in event log ..." last org last)
+    (log/infof "Storing last [%d] pull requests in [organization: %s|repo: %s] in event log ..." last org repo)
     (let [pull-request-info (api/request-info-client config)
           pull-requests (pull-request-info org repo last)
           key (str "pr:" org ":" repo ":" (System/currentTimeMillis))

@@ -12,21 +12,21 @@
 
 (defn- do-query
   "Issue `query` to GitHub's GraphQL API, returning the response's body
-  as a JSON object"
+  as a JSON object. If supplied, use `variables` to parameterize `query`.
+  Use `config` hash to look up GitHub API URL and access token."
   ([config query]
    (do-query config query nil))
-  ([config query variables]
+  ([{:keys [gh-api-url gh-api-token]} query variables]
    (let [fquery (fmt-query query)
-         endpoint (:gh-api-url config)
          body (if variables
                 (format "{\"query\": \"%s\", \"variables\": %s}" fquery (json/generate-string variables))
                 (format "{\"query\": \"%s\"}" fquery))]
-     (log/debugf "Issuing GraphQL query [%s] to [%s] ..." body endpoint)
-     (let [resp (http/post endpoint
+     (log/debugf "Issuing GraphQL query [%s] to [%s] ..." body gh-api-url)
+     (let [resp (http/post gh-api-url
                            {:as :json
                             :content-type :json
                             :accept :json
-                            :headers {"authorization" (str "bearer " (:gh-api-token config))}
+                            :headers {"authorization" (str "bearer " gh-api-token)}
                             :body body})
            result (:body resp)]
        (log/debugf "[DONE] [%s] -> [%s]" fquery result)
