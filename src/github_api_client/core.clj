@@ -10,7 +10,7 @@
   "Start application"
   [& args]
   (let [cnf (conf/config)]
-    (app/log-startup-banner)
+    (app/log-startup-banner "github_api_client.core")
     (storage/start-rocksdb cnf)
     (let [[_ stop-chan] (task/schedule-event-log cnf)]
       (async/<!! stop-chan))))

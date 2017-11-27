@@ -3,7 +3,10 @@
             [clojure.test :as t]))
 
 (t/deftest manifest-map
-  (t/testing "that manifest-map loads META-INF/MANIFEST.MF from classpath"
-    ;; Not that this will load SOME, non-deterministically found MANIFEST.MF
-    (let [loaded-manifest (#'sut/manifest-map)]
-      (t/is (not-empty loaded-manifest)))))
+  (t/testing "that manifest-map loads META-INF/MANIFEST.MF for clojure.main"
+    (let [loaded-manifest (#'sut/manifest-map "clojure.main")]
+      (t/is (not-empty loaded-manifest))
+      (t/is (= "clojure.main" (get loaded-manifest "Main-Class")))))
+  (t/testing "that manifest-map returns empty map if supplied class is not in jar"
+    (let [loaded-manifest (#'sut/manifest-map "java.lang.String")]
+      (t/is (empty loaded-manifest)))))
