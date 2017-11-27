@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Git-Branch: master
+Application-Name: github-api-client
+Application-Version: 1.0.0-SNAPSHOT
+Git-Dirty: true
+Built-By: obergner
+Application-Description: A demo client for GitHub's GraphQL API
+Created-By: Leiningen 2.8.1
+Build-Jdk: 1.8.0_112
+Git-Commit: 4799a56fac2872de3607516b0b48046c1968ec0c
+Main-Class: github_api_client.core
