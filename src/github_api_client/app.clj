@@ -31,7 +31,7 @@
     (log/infof " Git-Dirty : %s" (get-in manifest ["Git-Dirty"]))
     (log/infof "============================================================================")
     (log/infof "")
-    (doseq [entry env/env]
-      (log/infof "%40.40s: %s" (key entry) (val entry)))
+    (doseq [[k v] env/env]
+      (log/infof "%40.40s: %s" k v))
     (log/infof "")
     (log/infof "============================================================================")))
