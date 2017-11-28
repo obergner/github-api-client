@@ -1,11 +1,9 @@
 (ns github-api-client.github-api-test
   (:require [github-api-client.github-api :as sut]
-            [github-api-client.test-http-server :as mock]
+            [stub-http.core :as fake]
             [clojure.test :as t]
             [cheshire.core :as json]
             [clojure.string :as string]))
-
-(t/use-fixtures :once mock/with-mock-server)
 
 (defn- json-body
   [ring-request]
@@ -18,31 +16,31 @@
 
 (t/deftest commit-type-client
   (t/testing "that client uses correct URL and API token"
-    (let [api-url "http://localhost:3000/graphql"
-          api-token "test-token"
-          expected (fn [req]
-                     (and
-                      (= (:uri req) "/graphql")
-                      (string/includes? (get-in req [:headers "authorization"] "") api-token)))]
-      (mock/when-then expected (json-body commit-type-info))
-      (let [config {:gh-api-url api-url :gh-api-token api-token}
+    (fake/with-routes! [gh-api-token "test-token"]
+      {(fn [request]
+         (and
+          (= (:path request) "/graphql")
+          (string/includes? (get-in request [:headers :authorization] "") gh-api-token)))
+       (json-body commit-type-info)}
+      (let [config {:gh-api-url (format "http://localhost:%s/graphql" port) :gh-api-token gh-api-token}
             test-client (sut/commit-type-client config)
             resp (test-client)]
         (t/is (some? resp)))))
   (t/testing "that client sets accept application/json"
-    (let [expected (fn [req]
-                     (= "application/json" (get-in req [:headers "accept"])))]
-      (mock/when-then expected (json-body commit-type-info))
-      (let [config {:gh-api-url "http://localhost:3000/graphql" :gh-api-token "test-token"}
+    (fake/with-routes!
+      {(fn [request]
+         (= "application/json" (get-in request [:headers :accept])))
+       (json-body commit-type-info)}
+      (let [config {:gh-api-url (format "http://localhost:%d/graphql" port) :gh-api-token "test-token"}
             test-client (sut/commit-type-client config)
             resp (test-client)]
         (t/is (some? resp)))))
   (t/testing "that client returns correct type information"
-    (let [expected (constantly true)
-          expected-type-info (get-in commit-type-info [:body :data :__type])]
-      (mock/when-then expected (json-body commit-type-info))
-      (let [config {:gh-api-url "http://localhost:3000/graphql" :gh-api-token "test-token"}
+    (fake/with-routes!
+      {"/graphql" (json-body commit-type-info)}
+      (let [config {:gh-api-url (format "http://localhost:%d/graphql" port) :gh-api-token "test-token"}
             test-client (sut/commit-type-client config)
+            expected-type-info (get-in commit-type-info [:body :data :__type])
             resp (test-client)]
         (t/is (= expected-type-info resp))))))
 
@@ -66,32 +64,32 @@
 
 (t/deftest request-info-client
   (t/testing "that client uses correct URL and API token"
-    (let [api-url "http://localhost:3000/graphql"
-          api-token "test-token"
-          expected (fn [req]
-                     (and
-                      (= (:uri req) "/graphql")
-                      (string/includes? (get-in req [:headers "authorization"] "") api-token)))]
-      (mock/when-then expected (json-body last-three-prs))
-      (let [config {:gh-api-url api-url :gh-api-token api-token}
-            test-client (sut/request-info-client config)
+    (fake/with-routes! [gh-api-token "test-token"]
+      {(fn [request]
+         (and
+          (= (:path request) "/graphql")
+          (string/includes? (get-in request [:headers :authorization] "") gh-api-token)))
+       (json-body last-three-prs)}
+      (let [config {:gh-api-url (format "http://localhost:%s/graphql" port) :gh-api-token gh-api-token}
             last 3
+            test-client (sut/request-info-client config)
             resp (test-client "tensorflow" "tensorflow" last)]
         (t/is (= last (count resp))))))
   (t/testing "that client sets accept application/json"
-    (let [expected (fn [req]
-                     (= "application/json" (get-in req [:headers "accept"])))]
-      (mock/when-then expected (json-body last-three-prs))
-      (let [config {:gh-api-url "http://localhost:3000/graphql" :gh-api-token "test-token"}
+    (fake/with-routes!
+      {(fn [request]
+         (= "application/json" (get-in request [:headers :accept])))
+       (json-body last-three-prs)}
+      (let [config {:gh-api-url (format "http://localhost:%d/graphql" port) :gh-api-token "test-token"}
             test-client (sut/request-info-client config)
             last 3
             resp (test-client "tensorflow" "tensorflow" last)]
         (t/is (= last (count resp))))))
-  (t/testing "that client correctly returns correctly transformed list of pull requests"
-    (let [expected (constantly true)
-          expected-prs (map #(:node %) (get-in last-three-prs [:body :data :organization :repository :pullRequests :edges]))]
-      (mock/when-then expected (json-body last-three-prs))
-      (let [config {:gh-api-url "http://localhost:3000/graphql" :gh-api-token "test-token"}
+  (t/testing "that client returns correctly transformed list of pull requests"
+    (fake/with-routes!
+      {"/graphql" (json-body last-three-prs)}
+      (let [config {:gh-api-url (format "http://localhost:%d/graphql" port) :gh-api-token "test-token"}
             test-client (sut/request-info-client config)
+            expected-prs (map #(:node %) (get-in last-three-prs [:body :data :organization :repository :pullRequests :edges]))
             resp (test-client "tensorflow" "tensorflow" 3)]
         (t/is (= expected-prs resp))))))
