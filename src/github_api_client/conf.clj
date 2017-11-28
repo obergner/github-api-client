@@ -11,4 +11,5 @@
    :gh-org (env :gh-org)
    :gh-repo (env :gh-repo)
    :gh-prs-last (read-string (env :gh-prs-last))
-   :rocksdb-path (env :rocksdb-path)})
+   :rocksdb-path (env :rocksdb-path)
+   :management-api-port (read-string (env :management-api-port))})

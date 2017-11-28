@@ -7,6 +7,45 @@
 
 (t/use-fixtures :once mock/with-mock-server)
 
+(defn- json-body
+  [ring-request]
+  (update-in ring-request [:body] #(json/generate-string %)))
+
+(def commit-type-info
+  {:status 200
+   :headers {}
+   :body {:data {:__type "OBJECT"}}})
+
+(t/deftest commit-type-client
+  (t/testing "that client uses correct URL and API token"
+    (let [api-url "http://localhost:3000/graphql"
+          api-token "test-token"
+          expected (fn [req]
+                     (and
+                      (= (:uri req) "/graphql")
+                      (string/includes? (get-in req [:headers "authorization"] "") api-token)))]
+      (mock/when-then expected (json-body commit-type-info))
+      (let [config {:gh-api-url api-url :gh-api-token api-token}
+            test-client (sut/commit-type-client config)
+            resp (test-client)]
+        (t/is (some? resp)))))
+  (t/testing "that client sets accept application/json"
+    (let [expected (fn [req]
+                     (= "application/json" (get-in req [:headers "accept"])))]
+      (mock/when-then expected (json-body commit-type-info))
+      (let [config {:gh-api-url "http://localhost:3000/graphql" :gh-api-token "test-token"}
+            test-client (sut/commit-type-client config)
+            resp (test-client)]
+        (t/is (some? resp)))))
+  (t/testing "that client returns correct type information"
+    (let [expected (constantly true)
+          expected-type-info (get-in commit-type-info [:body :data :__type])]
+      (mock/when-then expected (json-body commit-type-info))
+      (let [config {:gh-api-url "http://localhost:3000/graphql" :gh-api-token "test-token"}
+            test-client (sut/commit-type-client config)
+            resp (test-client)]
+        (t/is (= expected-type-info resp))))))
+
 (def last-three-prs
   {:status  200
    :headers {}
@@ -24,10 +63,6 @@
                                                                        {:node {:id "MDExOlB1bGxSZXF1ZXN0MTU0NTYxMjIz",
                                                                                :title "change bazel-mirror to mirror.bazel",
                                                                                :bodyText "hi i'm back , using only one email."}}]}}}}}})
-
-(defn- json-body
-  [ring-request]
-  (update-in ring-request [:body] #(json/generate-string %)))
 
 (t/deftest request-info-client
   (t/testing "that client uses correct URL and API token"

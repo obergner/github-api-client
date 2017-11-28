@@ -32,6 +32,26 @@
        (log/debugf "[DONE] [%s] -> [%s]" fquery result)
        (:data result)))))
 
+;; Pseudo query to ping GitHub, essentially a health check
+
+(def ^:private q-type-info
+  "query($typeName: String!) {
+     __type(name: $typeName) {
+       kind
+     }
+  }")
+
+(defn commit-type-client
+  "Using the supplied `config` create and return a function that takes no arguments and returns
+  type information about GitHub's `Commit` type when called."
+  [config]
+  (fn []
+    (log/infof "Fetching type information about GitHub's commit object ...")
+    (let [resp (do-query config q-type-info {:typeName "Commit"})
+          type-info (get resp :__type)]
+      (log/infof "[DONE] [%s]" type-info)
+      type-info)))
+
 ;; Get pull request info
 
 (def ^:private q-pull-request-info
@@ -65,5 +85,5 @@
     (log/infof "Fetching last [%d] pull requests from [%s/%s] ..." last login repo)
     (let [resp (do-query config q-pull-request-info {:login login :repo repo :last last})
           prs (map #(% :node) (get-in resp [:organization :repository :pullRequests :edges]))]
-      (log/infof "[DONE] [%s] -> [%d pull requests]" login (count prs))
+      (log/infof "[DONE] [%s/%s last %d] -> [%d pull requests]" login repo last (count prs))
       prs)))

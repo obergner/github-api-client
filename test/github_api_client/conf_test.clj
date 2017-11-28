@@ -12,6 +12,7 @@
           exp-gh-repo (env/env :gh-repo)
           exp-gh-prs-last (read-string (env/env :gh-prs-last))
           exp-rocksdb-path (env/env :rocksdb-path)
+          exp-management-api-port (read-string (env/env :management-api-port))
           actual-config (sut/config)]
       (t/is (= exp-log-interval-ms (:log-interval-ms actual-config)))
       (t/is (= exp-gh-api-url (:gh-api-url actual-config)))
@@ -19,4 +20,5 @@
       (t/is (= exp-gh-org (:gh-org actual-config)))
       (t/is (= exp-gh-repo (:gh-repo actual-config)))
       (t/is (= exp-gh-prs-last (:gh-prs-last actual-config)))
-      (t/is (= exp-rocksdb-path (:rocksdb-path actual-config))))))
+      (t/is (= exp-rocksdb-path (:rocksdb-path actual-config)))
+      (t/is (= exp-management-api-port (:management-api-port actual-config))))))

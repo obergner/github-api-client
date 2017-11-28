@@ -11,7 +11,11 @@
                  [cheshire "5.8.0"]
                  [environ "1.1.0"]
                  [org.rocksdb/rocksdbjni "5.8.6"]
+                 [compojure "1.6.0"]
+                 [ring/ring-core "1.6.3"]
                  [ring/ring-jetty-adapter "1.6.3"]
+                 [ring/ring-json "0.4.0"]
+                 [ring-logger "0.7.7"]
                  [org.clojure/tools.logging "0.4.0"]
                  [org.slf4j/slf4j-api "1.7.25"]
                  [ch.qos.logback/logback-classic "1.2.3"]]
@@ -28,15 +32,18 @@
         :gh-org "tensorflow"
         :gh-repo "tensorflow"
         :gh-prs-last "5"
-        :rocksdb-path "./.prod.db"}
+        :rocksdb-path "./.prod.db"
+        :management-api-port "3100"}
   :profiles {:dev [:dev-public :dev-private]
              :dev-public {:env {:log-interval-ms "1000"
                                 :gh-api-url "https://api.github.com/graphql"
                                 :gh-org "tensorflow"
                                 :gh-repo "tensorflow"
                                 :gh-prs-last "5"
-                                :rocksdb-path "./target/dev.db"}
-                          :resource-paths ["test-resources"]}
+                                :rocksdb-path "./target/dev.db"
+                                :management-api-port "2200"}
+                          :resource-paths ["test-resources"]
+                          :dependencies [[se.haleby/stub-http "0.2.3"]]}
              :dev-private {:env {:gh-api-token "overridden-in-profile.clj"}}
              :test {:env {:log-interval-ms "10000"
                           :gh-api-url "http://localhost:3000/graphql"
@@ -44,6 +51,7 @@
                           :gh-org "tensorflow"
                           :gh-repo "tensorflow"
                           :gh-prs-last "5"
-                          :rocksdb-path "./target/test.db"}}
+                          :rocksdb-path "./target/test.db"
+                          :management-api-port "2100"}}
              :uberjar {:aot :all}}
   :aliases {"doc" ["marg" "--dir" "./target/doc"]})

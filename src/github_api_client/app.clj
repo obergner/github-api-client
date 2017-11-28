@@ -4,10 +4,10 @@
 
 (defn- manifest-map
   "Return the `mainAttributes` of file `META-INF/MANIFEST.MF` located in the jar
-  the class name `class-name` is part of, as a map.
+  the class named `class-name` is part of, as a map.
 
-  Note that looking up `class-name`'s `MANIFEST.MF` will fail if `clazz` is not stored in a
-  jar file. In this case, return an empty map."
+  Note that looking up `class-name`'s `MANIFEST.MF` will fail if the class named `class-name`
+  is not stored in a jar file. In this case, return an empty map."
   [class-name]
   (try
     (->> (str "jar:"
