@@ -34,15 +34,16 @@
     [#(reset! should-run false) stop-chan]))
 
 (defn event-log-scheduler
-  "Take and `atom` `scheduled-event-logs` wrapping a `hash` and return a function that takes a `config`
+  "Take an `atom` `scheduled-event-logs` wrapping a `hash` and return a function that takes a `config`
   hash as its only argument.
 
-  When called, this function will schedule `github-api-client.event-log/pull-request-logger` to run
+  When called, the returned function will schedule `github-api-client.event-log/pull-request-logger` to run
   every `log-interval-ms` against the GitHub repository `gh-org/gh-repo`, on each run pulling the last
-  `gh-prs-last` pull requests, storing them in our permanent storage. Arguments `log-interval-ms`,
-  `gh-org`, `gh-repo` and `gh-prs-last` are read as keys from the supplied `config` hash.
+  `gh-prs-last` pull requests, storing them in our permanent storage. `log-interval-ms`, `gh-org`,
+  `gh-repo` and `gh-prs-last` need to be passed in as arguments to the returned function.
 
-  This function will return `[stop-fn stop-chan]` where
+  The returned function will return `{:log-interval-ms log-interval-ms :stop-fn stop-fn :stop-chan :stop-chan}`
+  where
 
    * `stop-fn` is a function that takes not arguments and cancels the scheduled event log when called, and
    * `stop-chan` is a `clojure.core.async` `channel` that publishes exactly one message when this event-logger
@@ -51,5 +52,9 @@
   Store `stop-fn` and `stop-chan` under key \"`gh-org/gh-repo`\" in `scheduled-event-logs`, our state holder."
   [scheduled-event-logs config]
   (fn [log-interval-ms gh-org gh-repo gh-prs-last]
-    (let [key (str gh-org "/" gh-repo)
-          [stop-fn stop-chan] (schedule-event-log config)])))
+    (let [key (str gh-org "/" gh-repo)]
+      (when-let [{:keys [stop-fn]} (get @scheduled-event-logs key)]
+        (stop-fn))
+      (let [[stop-fn stop-chan] (schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last config)
+            new-schedule {:stop-fn stop-fn :stop-chan stop-chan :log-interval-ms log-interval-ms}]
+        (get (swap! scheduled-event-logs #(update-in % [key] (constantly new-schedule))) key)))))

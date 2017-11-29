@@ -24,3 +24,19 @@
       (stop-fn)
       (t/is (nil? (async/<!! stop-chan))))))
 
+(t/deftest event-log-scheduler
+  (t/testing "that function returned from event-log-scheduler returns updated schedules hash"
+    (let [schedules (atom {})
+          config {:gh-api-url "test" :gh-api-token "test"}
+          schedule (sut/event-log-scheduler schedules config)
+          log-interval-ms 1000000
+          gh-org "org"
+          gh-repo "repo"
+          expected-key (str gh-org "/" gh-repo)
+          updated-schedules (schedule 1000000 gh-org gh-repo 1)]
+      (try
+        (println updated-schedules)
+        (t/is (= log-interval-ms (:log-interval-ms updated-schedules)))
+        (t/is (t/function?  (:stop-fn updated-schedules)))
+        (t/is (satisfies? clojure.core.async.impl.protocols/Channel (:stop-chan updated-schedules)))
+        (finally ((:stop-fn updated-schedules)))))))
