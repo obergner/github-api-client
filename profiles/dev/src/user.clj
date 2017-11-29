@@ -26,7 +26,7 @@
 
 (defn schedule
   [log-interval-ms gh-org gh-repo gh-prs-last]
-  (let [[stop-fn stop-chan]
-        (#'task/schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last storage/db conf/conf)]
-    stop-fn))
+  (let [do-schedule (task/make-scheduler task/schedules storage/db conf/conf)
+        sched (do-schedule log-interval-ms gh-org gh-repo gh-prs-last)]
+    sched))
 
