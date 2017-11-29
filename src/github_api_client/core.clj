@@ -9,8 +9,9 @@
 (defn -main
   "Start application"
   [& args]
-  (let [cnf (conf/config)]
+  (let [cfg (conf/config)
+        {:keys [log-interval-ms gh-org gh-repo gh-prs-last]} (conf/startup-params)]
     (app/log-startup-banner "github_api_client.core")
-    (storage/start-rocksdb cnf)
-    (let [[_ stop-chan] (task/schedule-event-log cnf)]
+    (storage/start-rocksdb cfg)
+    (let [[_ stop-chan] (task/schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last cfg)]
       (async/<!! stop-chan))))

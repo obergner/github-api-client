@@ -35,17 +35,24 @@
         :rocksdb-path "./.prod.db"
         :management-api-port "3100"}
   :profiles {:dev [:dev-public :dev-private]
-             :dev-public {:env {:log-interval-ms "1000"
+             :dev-public {:source-paths ["profiles/dev/src"]
+                          :resource-paths ["profiles/dev/resources"]
+                          :dependencies [[se.haleby/stub-http "0.2.3"]
+                                         [pjstadig/humane-test-output "0.8.3"]]
+                          :plugins      [[com.jakemccrary/lein-test-refresh "0.21.1"]]
+                          :repl-options {:init-ns user}
+                          :injections [(require 'pjstadig.humane-test-output)
+                                       (pjstadig.humane-test-output/activate!)]
+                          :env {:log-interval-ms "1000"
                                 :gh-api-url "https://api.github.com/graphql"
                                 :gh-org "tensorflow"
                                 :gh-repo "tensorflow"
                                 :gh-prs-last "5"
                                 :rocksdb-path "./target/dev.db"
-                                :management-api-port "2200"}
-                          :resource-paths ["test-resources"]
-                          :dependencies [[se.haleby/stub-http "0.2.3"]]}
+                                :management-api-port "2200"}}
              :dev-private {:env {:gh-api-token "overridden-in-profile.clj"}}
-             :test {:env {:log-interval-ms "10000"
+             :test {:resource-paths ["test-resources"]
+                    :env {:log-interval-ms "10000"
                           :gh-api-url "http://localhost:3000/graphql"
                           :gh-api-token "test-api-token"
                           :gh-org "tensorflow"
