@@ -1,20 +1,9 @@
 (ns github-api-client.storage
   (:require [clojure.core.async :as async]
+            [mount.core :as mount]
+            [github-api-client.conf :as conf]
             [clojure.tools.logging :as log])
   (:import (org.rocksdb RocksDB Options)))
-
-;; RocksDB layer, the new hotness
-
-(def ^:private dbchan (async/chan 10))
-
-(defn put
-  "Store `value` under `key` in backing store.
-  Returns `value`.
-  This function must not be called from an IOC thread but
-  only from a regular thread."
-  [key value]
-  (async/>!! dbchan [key value])
-  value)
 
 (defn- make-rocksdb
   "Create a new `RocksDB` instance using the supplied `config`.
@@ -25,9 +14,9 @@
   [{:keys [rocksdb-path]}]
   (let [options (-> (Options.)
                     (.setCreateIfMissing true))
-        db (RocksDB/open options rocksdb-path)]
-    (log/infof "Opened RocksDB instance [%s] located at [%s] using options [%s]" db rocksdb-path options)
-    [db options]))
+        rocksdb (RocksDB/open options rocksdb-path)]
+    (log/infof "Opened RocksDB instance [%s] located at [%s] using options [%s]" rocksdb rocksdb-path options)
+    [rocksdb options]))
 
 (defn start-rocksdb
   "Start a go routine that opens a new `RocksDB` instance using the supplied
@@ -36,25 +25,40 @@
   If the go routine started by this function receives message `:terminate` on
   `dbchan` it will shut down its `RocksDB` instance and terminate its loop."
   [config]
-  (async/go
-    (log/infof "Starting RocksDB persistence service")
-    (let [db-options (make-rocksdb config)]
-      (with-open [db (first db-options)
-                  options (second db-options)]
-        (loop [msg (async/<! dbchan)]
-          (condp = msg
-            :terminate (do
-                         (log/infof "Received termination message - shutting down RocksDB instance [%s]" db))
-            (let [[key value] msg]
-              (-> db
-                  (.put (.getBytes key) (.getBytes value)))
-              (log/debugf "PUT: [%s] -> [%s]" key value)
-              (recur (async/<! dbchan)))))))
-    (log/infof "RocksDB persistence service stopped")))
+  (let [db-chan (async/chan 10)]
+    (async/go
+      (log/infof "Starting RocksDB persistence service")
+      (let [db-options (make-rocksdb config)]
+        (with-open [rocksdb (first db-options)
+                    options (second db-options)]
+          (loop [msg (async/<! db-chan)]
+            (condp = msg
+              :terminate (do
+                           (log/infof "Received termination message - shutting down RocksDB instance [%s]" rocksdb))
+              (let [[key value] msg]
+                (-> rocksdb
+                    (.put (.getBytes key) (.getBytes value)))
+                (log/debugf "PUT: [%s] -> [%s]" key value)
+                (recur (async/<! db-chan))))))
+        (log/infof "RocksDB persistence service stopped")))
+    db-chan))
 
 (defn stop-rocksdb
   "Stop go routine managing our `RocksDB` instance, closing that instance.
   Returns `true`."
-  []
-  (async/>!! dbchan :terminate)
+  [db-chan]
+  (async/>!! db-chan :terminate)
   true)
+
+(mount/defstate db
+  :start (start-rocksdb conf/conf)
+  :stop (stop-rocksdb db))
+
+(defn put
+  "Store `value` under `key` in backing store.
+  Returns `value`.
+  This function must not be called from an IOC thread but
+  only from a regular thread."
+  [db key value]
+  (async/>!! db [key value])
+  value)

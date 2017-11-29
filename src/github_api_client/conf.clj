@@ -1,5 +1,6 @@
 (ns github-api-client.conf
-  (:require [environ.core :refer [env]]))
+  (:require [environ.core :refer [env]]
+            [mount.core :as mount]))
 
 (defn config
   "Read application configuration from environment variables and return
@@ -18,3 +19,7 @@
    :gh-org (env :gh-org)
    :gh-repo (env :gh-repo)
    :gh-prs-last (read-string (env :gh-prs-last))})
+
+(mount/defstate conf :start (config))
+
+(mount/defstate params :start (startup-params))

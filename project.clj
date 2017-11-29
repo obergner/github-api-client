@@ -8,6 +8,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.async "0.3.465"]
                  [mount "0.1.11"]
+                 [tolitius/mount-up "0.1.1"]
                  [environ "1.1.0"]
                  [cheshire "5.8.0"]
                  [clj-http "3.7.0"]
@@ -44,7 +45,7 @@
                           :repl-options {:init-ns user}
                           :injections [(require 'pjstadig.humane-test-output)
                                        (pjstadig.humane-test-output/activate!)]
-                          :env {:log-interval-ms "1000"
+                          :env {:log-interval-ms "60000"
                                 :gh-api-url "https://api.github.com/graphql"
                                 :gh-org "tensorflow"
                                 :gh-repo "tensorflow"

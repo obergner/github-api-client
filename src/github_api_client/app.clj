@@ -3,6 +3,7 @@
             [github-api-client.conf :as conf]
             [github-api-client.storage :as storage]
             [github-api-client.task :as task]
+            [mount.core :as mount]
             [clojure.tools.logging :as log]))
 
 (defn- manifest-map
@@ -46,15 +47,21 @@
     (log/infof "")
     (log/infof "============================================================================")))
 
-(defn start
-  "Start this application. For now, supplied `args` are ignored. Return a `clojure.core.async` `channel`
+(defn start-app
+  "Start this application. Return a `clojure.core.async` `channel`
   that will produce exactly one message - `nil` - if the task scheduler started by calling this function
   has shut down. This channel is intended to be blocked on by the main thread to prevent the process
   from exiting immediately."
-  [& args]
-  (let [cfg (conf/config)
-        {:keys [log-interval-ms gh-org gh-repo gh-prs-last]} (conf/startup-params)]
+  [config params db schedules]
+  (let [{:keys [log-interval-ms gh-org gh-repo gh-prs-last]} params
+        schedule (task/make-scheduler schedules db config)]
     (log-startup-banner "github_api_client.core")
-    (storage/start-rocksdb cfg)
-    (let [[_ stop-chan] (task/schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last cfg)]
-      stop-chan)))
+    (schedule log-interval-ms gh-org gh-repo gh-prs-last)))
+
+(defn stop-app
+  [{:keys [stop-fn]}]
+  (stop-fn))
+
+(mount/defstate app
+  :start (start-app conf/conf conf/params storage/db task/schedules)
+  :stop (stop-app app))

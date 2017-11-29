@@ -4,7 +4,9 @@
             [ring.middleware.json :as mjson]
             [ring.logger :as alog]
             [ring.adapter.jetty :as jetty]
+            [github-api-client.conf :as conf]
             [github-api-client.github-api :as api]
+            [mount.core :as mount]
             [clojure.tools.logging :as log]))
 
 (defn- management-api-routes
@@ -44,3 +46,7 @@
   (log/infof "Starting management API on port [%s], using config [%s] ..." management-api-port config)
   (let [management-api (jetty/run-jetty (management-api-app config) {:port management-api-port :join? false})]
     #(.stop management-api)))
+
+(mount/defstate management-api
+  :start (start-management-api conf/conf)
+  :stop (management-api))

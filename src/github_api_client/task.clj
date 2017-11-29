@@ -1,7 +1,17 @@
 (ns github-api-client.task
   (:require [github-api-client.event-log :as event-log]
+            [mount.core :as mount]
             [clojure.core.async :as async]
             [clojure.tools.logging :as log]))
+
+(defn cancel-schedules
+  [schedules]
+  (doseq [[key {:keys [stop-fn]}] @schedules]
+    (stop-fn)))
+
+(mount/defstate schedules
+  :start (atom {})
+  :stop (cancel-schedules schedules))
 
 (defn schedule-event-log
   "Schedule `github-api-client.event-log/pull-requests-logger` to run every `log-interval-ms` milliseconds,
@@ -16,10 +26,10 @@
 
   The purpose of `stop-chan` is for the main thread to block on it so that the application does not exit
   immediately."
-  [log-interval-ms gh-org gh-repo gh-prs-last config]
+  [log-interval-ms gh-org gh-repo gh-prs-last db config]
   (log/infof "START: log last [%d] pull requests in [%s/%s] every [%d] ms"
              gh-prs-last gh-org gh-repo log-interval-ms)
-  (let [log-pull-requests (event-log/pull-requests-logger config)
+  (let [log-pull-requests (event-log/pull-requests-logger db config)
         should-run (atom true)
         stop-chan (async/go
                     (while @should-run
@@ -33,8 +43,8 @@
                     (log/infof "STOP: received request to stop event-log loop"))]
     [#(reset! should-run false) stop-chan]))
 
-(defn event-log-scheduler
-  "Take an `atom` `scheduled-event-logs` wrapping a `hash` and return a function that takes a `config`
+(defn make-scheduler
+  "Take an `atom` `schedules` wrapping a `hash` and return a function that takes a `config`
   hash as its only argument.
 
   When called, the returned function will schedule `github-api-client.event-log/pull-request-logger` to run
@@ -50,11 +60,11 @@
      shuts down.
 
   Store `stop-fn` and `stop-chan` under key \"`gh-org/gh-repo`\" in `scheduled-event-logs`, our state holder."
-  [scheduled-event-logs config]
+  [schedules db config]
   (fn [log-interval-ms gh-org gh-repo gh-prs-last]
     (let [key (str gh-org "/" gh-repo)]
-      (when-let [{:keys [stop-fn]} (get @scheduled-event-logs key)]
+      (when-let [{:keys [stop-fn]} (get @schedules key)]
         (stop-fn))
-      (let [[stop-fn stop-chan] (schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last config)
+      (let [[stop-fn stop-chan] (schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last db config)
             new-schedule {:stop-fn stop-fn :stop-chan stop-chan :log-interval-ms log-interval-ms}]
-        (get (swap! scheduled-event-logs #(update-in % [key] (constantly new-schedule))) key)))))
+        (get (swap! schedules #(update-in % [key] (constantly new-schedule))) key)))))
