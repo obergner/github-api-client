@@ -18,7 +18,7 @@
     (log/infof "Opened RocksDB instance [%s] located at [%s] using options [%s]" rocksdb rocksdb-path options)
     [rocksdb options]))
 
-(defn start-rocksdb
+(defn- start-rocksdb
   "Start a go routine that opens a new `RocksDB` instance using the supplied
   `config` to initialise it, then loops waiting for key-value pairs to store.
 
@@ -43,7 +43,7 @@
         (log/infof "RocksDB persistence service stopped")))
     db-chan))
 
-(defn stop-rocksdb
+(defn- stop-rocksdb
   "Stop go routine managing our `RocksDB` instance, closing that instance.
   Returns `true`."
   [db-chan]

@@ -13,11 +13,11 @@
           gh-org "org"
           gh-repo "repo"
           gh-prs-last 1
-          db (storage/start-rocksdb config)
-          [stop-fn stop-chan] (sut/schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last db config)]
+          db (#'storage/start-rocksdb config)
+          [stop-fn stop-chan] (#'sut/schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last db config)]
       (try
         (t/is (= false (stop-fn)))
-        (finally (storage/stop-rocksdb db)))))
+        (finally (#'storage/stop-rocksdb db)))))
   (t/testing "that channel returned from schedule-event-log publishes nil stop message"
     (let [config {:gh-api-url "test"
                   :gh-api-token "test"
@@ -26,12 +26,12 @@
           gh-org "org"
           gh-repo "repo"
           gh-prs-last 1
-          db (storage/start-rocksdb config)
-          [stop-fn stop-chan] (sut/schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last db config)]
+          db (#'storage/start-rocksdb config)
+          [stop-fn stop-chan] (#'sut/schedule-event-log log-interval-ms gh-org gh-repo gh-prs-last db config)]
       (try
         (stop-fn)
         (t/is (nil? (async/<!! stop-chan)))
-        (finally (storage/stop-rocksdb db))))))
+        (finally (#'storage/stop-rocksdb db))))))
 
 (t/deftest event-log-scheduler
   (t/testing "that function returned from event-log-scheduler returns updated schedules hash"
@@ -39,7 +39,7 @@
           config {:gh-api-url "test"
                   :gh-api-token "test"
                   :rocksdb-path "./target/.test3.db"}
-          db (storage/start-rocksdb config)
+          db (#'storage/start-rocksdb config)
           schedule (sut/make-scheduler schedules db config)
           log-interval-ms 1000000
           gh-org "org"
@@ -52,4 +52,4 @@
         (t/is (satisfies? clojure.core.async.impl.protocols/Channel (:stop-chan updated-schedules)))
         (finally
           ((:stop-fn updated-schedules))
-          (storage/stop-rocksdb db))))))
+          (#'storage/stop-rocksdb db))))))

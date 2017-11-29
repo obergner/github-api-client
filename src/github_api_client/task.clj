@@ -4,7 +4,7 @@
             [clojure.core.async :as async]
             [clojure.tools.logging :as log]))
 
-(defn cancel-schedules
+(defn- cancel-schedules
   [schedules]
   (doseq [[key {:keys [stop-fn]}] @schedules]
     (stop-fn)))
@@ -13,7 +13,7 @@
   :start (atom {})
   :stop (cancel-schedules schedules))
 
-(defn schedule-event-log
+(defn- schedule-event-log
   "Schedule `github-api-client.event-log/pull-requests-logger` to run every `log-interval-ms` milliseconds,
   pulling the last `gh-prs-last` pull requests from GitHub repository `gh-org`/`gh-repo`, storing them in
   our database. Use configuration hash `config` to configure GitHub API URL, access token and so forth.

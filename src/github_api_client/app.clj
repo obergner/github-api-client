@@ -47,7 +47,7 @@
     (log/infof "")
     (log/infof "============================================================================")))
 
-(defn start-app
+(defn- start-app
   "Start this application. Return a `clojure.core.async` `channel`
   that will produce exactly one message - `nil` - if the task scheduler started by calling this function
   has shut down. This channel is intended to be blocked on by the main thread to prevent the process
@@ -58,7 +58,7 @@
     (log-startup-banner "github_api_client.core")
     (schedule log-interval-ms gh-org gh-repo gh-prs-last)))
 
-(defn stop-app
+(defn- stop-app
   [{:keys [stop-fn]}]
   (stop-fn))
 
