@@ -3,6 +3,7 @@ MAINTAINER Olaf Bergner <olaf.bergner@gmx.de>
 
 ARG version
 ARG port
+ARG managementApiPort
 
 WORKDIR /app
 
@@ -17,8 +18,9 @@ ENV GH_ORG obergner
 ENV GH_REPO camelpe
 ENV GH_PRS_LAST 3
 ENV ROCKSDB_PATH /app/db
-ENV MANAGEMENT_API_PORT 3100
+ENV MANAGEMENT_API_PORT ${managementApiPort}
 
 EXPOSE ${port}
+EXPOSE ${managementApiPort}
 
 CMD ["java", "-jar", "/app/app.jar"]

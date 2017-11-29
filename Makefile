@@ -40,6 +40,7 @@ build: test package
 	docker build \
          --build-arg version=$(VERSION) \
          --build-arg port=$(PORT) \
+         --build-arg managementApiPort=$(MANAGEMENT_API_PORT) \
          -t $(APP_NAME):$(VERSION) .
 
 run: ## Run container
@@ -47,6 +48,7 @@ run: ## Run container
          --env-file=./config.env \
          --env=GH_API_TOKEN=$(ACCESS_TOKEN) \
          --publish=$(PORT):$(PORT) \
+         --publish=$(MANAGEMENT_API_PORT):$(MANAGEMENT_API_PORT) \
          --name="$(APP_NAME)" \
          $(APP_NAME):$(VERSION)
 
