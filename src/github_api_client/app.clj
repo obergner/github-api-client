@@ -3,6 +3,7 @@
             [github-api-client.conf :as conf]
             [github-api-client.storage :as storage]
             [github-api-client.task :as task]
+            [github-api-client.management-api :as mapi]
             [mount.core :as mount]
             [clojure.tools.logging :as log]))
 
@@ -48,20 +49,22 @@
     (log/infof "============================================================================")))
 
 (defn- start-app
-  "Start this application. Return a `clojure.core.async` `channel`
-  that will produce exactly one message - `nil` - if the task scheduler started by calling this function
-  has shut down. This channel is intended to be blocked on by the main thread to prevent the process
-  from exiting immediately."
-  [config params db schedules]
+  "Start this application by starting all supplied subsystems in order.
+
+  Return a `clojure.core.async` `channel` that will produce exactly one message - `nil` - if the task
+  scheduler started by calling this function has shut down. This channel is intended to be blocked on
+  by the main thread to prevent the process from exiting immediately."
+  [config params db schedules management-api]
   (let [{:keys [log-interval-ms gh-org gh-repo gh-prs-last]} params
         schedule (task/make-scheduler schedules db config)]
     (log-startup-banner "github_api_client.core")
     (schedule log-interval-ms gh-org gh-repo gh-prs-last)))
 
 (defn- stop-app
+  "Stop this application by stopping all subsystems in reverse startup order."
   [{:keys [stop-fn]}]
   (stop-fn))
 
 (mount/defstate app
-  :start (start-app conf/conf conf/params storage/db task/schedules)
+  :start (start-app conf/conf conf/params storage/db task/schedules mapi/management-api)
   :stop (stop-app app))

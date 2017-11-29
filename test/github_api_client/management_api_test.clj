@@ -9,24 +9,24 @@
   [config new-port]
   (update-in config [:gh-api-url] (constantly (format "http://localhost:%d/graphql" new-port))))
 
-(t/deftest start-management-api
+(t/deftest start-stop-management-api
   (t/testing "that health endpoint returns 200/OK if GitHub API returns 200/OK"
     (fake/with-routes!
       {"/graphql" {:status 200
                    :headers {}
                    :body "{\"data\": {\"__type\": {\"kind\": \"OBJECT\"}}}"}}
-      (let [cnf (fix-gh-api-port (conf/config) port)
-            stop-fn (sut/start-management-api cnf)]
+      (let [cfg (fix-gh-api-port (conf/config) port)
+            server (#'sut/start-management-api cfg)]
         (try
-          (t/is (= 200 (:status (http/get (format "http://localhost:%d/health" (:management-api-port cnf))))))
-          (finally (stop-fn))))))
+          (t/is (= 200 (:status (http/get (format "http://localhost:%d/health" (:management-api-port cfg))))))
+          (finally (#'sut/stop-management-api server))))))
   (t/testing "that health endpoint returns 503/Server Unavailable if GitHub API returns 500/Internal Server Error"
     (fake/with-routes!
       {"/graphql" {:status 500
                    :headers {}
                    :body ""}}
-      (let [cnf (fix-gh-api-port (conf/config) port)
-            stop-fn (sut/start-management-api cnf)]
+      (let [cfg (fix-gh-api-port (conf/config) port)
+            server (#'sut/start-management-api cfg)]
         (try
-          (t/is (= 503 (:status (http/get (format "http://localhost:%d/health" (:management-api-port cnf)) {:throw-exceptions false}))))
-          (finally (stop-fn)))))))
+          (t/is (= 503 (:status (http/get (format "http://localhost:%d/health" (:management-api-port cfg)) {:throw-exceptions false}))))
+          (finally (#'sut/stop-management-api server)))))))

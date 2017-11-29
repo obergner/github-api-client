@@ -7,7 +7,8 @@
             [github-api-client.conf :as conf]
             [github-api-client.github-api :as api]
             [mount.core :as mount]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log])
+  (:import (org.eclipse.jetty.server Server)))
 
 (defn- management-api-routes
   "Define and return management API `compojure` routes, as a `Ring` handler. Use `config` hash
@@ -38,15 +39,21 @@
       mjson/wrap-json-response
       mjson/wrap-json-body))
 
-(defn start-management-api
+(defn- ^Server start-management-api
   "Start an embedded `Jetty` instance serving our management API, using the `config`
   hash to configure port and access to GitHub API.
-  Return a function that takes no arguments and if called stops started `Jetty` instance."
+  Return an `org.eclipse.jetty.server.Server` instance that may be stopped by calling `.stop` on it."
   [{:keys [management-api-port], :as config}]
   (log/infof "Starting management API on port [%s], using config [%s] ..." management-api-port config)
   (let [management-api (jetty/run-jetty (management-api-app config) {:port management-api-port :join? false})]
-    #(.stop management-api)))
+    management-api))
+
+(defn- stop-management-api
+  "Stop `server`, an `org.eclipse.jetty.server.Server` instance. Return `nil`."
+  [^Server server]
+  (log/infof "Stopping management API ...")
+  (.stop server))
 
 (mount/defstate management-api
   :start (start-management-api conf/conf)
-  :stop (management-api))
+  :stop (stop-management-api management-api))
