@@ -30,12 +30,12 @@
              "Git-Branch" ~#(clojure.string/trim (:out (clojure.java.shell/sh "git" "rev-parse" "--abbrev-ref" "HEAD") %))
              "Git-Commit" ~#(clojure.string/trim (:out (clojure.java.shell/sh "git" "rev-parse" "HEAD") %))
              "Git-Dirty" ~#(str (not (empty? (clojure.string/trim (:out (clojure.java.shell/sh "git" "status" "--porcelain") %)))))}
-  :env {:log-interval-ms "30000"
+  :env {:log-interval-ms "600000"
         :gh-api-url "https://api.github.com/graphql"
         :gh-org "tensorflow"
         :gh-repo "tensorflow"
         :gh-prs-last "5"
-        :rocksdb-path "./.prod.db"
+        :rocksdb-path "./targer/prod.db"
         :management-api-port "3100"}
   :profiles {:dev [:dev-public :dev-private]
              :dev-public {:source-paths ["profiles/dev/src"]
@@ -48,8 +48,8 @@
                                        (pjstadig.humane-test-output/activate!)]
                           :env {:log-interval-ms "60000"
                                 :gh-api-url "https://api.github.com/graphql"
-                                :gh-org "tensorflow"
-                                :gh-repo "tensorflow"
+                                :gh-org "obergner"
+                                :gh-repo "github-api-client"
                                 :gh-prs-last "5"
                                 :rocksdb-path "./target/dev.db"
                                 :management-api-port "2200"}}
@@ -58,8 +58,8 @@
                     :env {:log-interval-ms "10000"
                           :gh-api-url "http://localhost:3000/graphql"
                           :gh-api-token "test-api-token"
-                          :gh-org "tensorflow"
-                          :gh-repo "tensorflow"
+                          :gh-org "test-org"
+                          :gh-repo "test-repo"
                           :gh-prs-last "5"
                           :rocksdb-path "./target/test.db"
                           :management-api-port "2100"}}

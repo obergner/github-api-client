@@ -5,15 +5,13 @@
             [clojure.tools.logging :as log]))
 
 (defn- fmt-query
-  "Properly format GraphQL query `query`, eliminating line breaks
-  since those are not allowed in a well-formed query."
+  "Properly format GraphQL query `query`, eliminating line breaks since those are not allowed in a well-formed query."
   [query]
   (str/replace query #"\n" ""))
 
 (defn- do-query
-  "Issue `query` to GitHub's GraphQL API, returning the response's body
-  as a JSON object. If supplied, use `variables` to parameterize `query`.
-  Use `config` hash to look up GitHub API URL and access token."
+  "Issue `query` to GitHub's GraphQL API, returning the response's body as a JSON object. If supplied, use `variables`
+  to parameterize `query`. Use `config` hash to look up GitHub API URL and access token."
   ([config query]
    (do-query config query nil))
   ([{:keys [gh-api-url gh-api-token]} query variables]
@@ -42,8 +40,8 @@
   }")
 
 (defn commit-type-client
-  "Using the supplied `config` create and return a function that takes no arguments and returns
-  type information about GitHub's `Commit` type when called."
+  "Using the supplied `config` create and return a function that takes no arguments and returns type information about
+  GitHub's `Commit` type when called."
   [config]
   (fn []
     (log/infof "Fetching type information about GitHub's commit object ...")
@@ -77,9 +75,8 @@
   }")
 
 (defn request-info-client
-  "Using the supplied `config` create and return a function that takes
-  `login`, `repo` and `last` and returns the latest `last` pull requests
-  in repository `repo` belonging to the organization identified by `login`."
+  "Using the supplied `config` create and return a function that takes `login`, `repo` and `last` and returns the latest
+  `last` pull requests in repository `repo` belonging to the organization identified by `login`."
   [config]
   (fn [login repo last]
     (log/infof "Fetching last [%d] pull requests from [%s/%s] ..." last login repo)

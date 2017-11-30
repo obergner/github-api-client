@@ -4,7 +4,8 @@
             [clj-http.client :as http]
             [stub-http.core :as fake]
             [github-api-client.conf :as conf]
-            [clojure.core.async :as async]))
+            [clojure.core.async :as async]
+            [github-api-client.task :as task]))
 
 (defn- fix-gh-api-port
   [config new-port]
@@ -16,12 +17,12 @@
       {"/graphql" {:status 200
                    :headers {}
                    :body "{\"data\": {\"__type\": {\"kind\": \"OBJECT\"}}}"}}
-      (let [cfg (fix-gh-api-port (conf/config) port)
+      (let [config (fix-gh-api-port (conf/config) port)
             schedules (atom {})
             db (async/chan 10)
-            server (#'sut/start-management-api cfg schedules db)]
+            server (#'sut/start-management-api config schedules db)]
         (try
-          (t/is (= 200 (:status (http/get (format "http://localhost:%d/health" (:management-api-port cfg))))))
+          (t/is (= 200 (:status (http/get (format "http://localhost:%d/health" (:management-api-port config))))))
           (finally
             (#'sut/stop-management-api server)
             (doseq [[key {:keys [stop-fn]}] @schedules]
@@ -31,17 +32,17 @@
       {"/graphql" {:status 500
                    :headers {}
                    :body ""}}
-      (let [cfg (fix-gh-api-port (conf/config) port)
+      (let [config (fix-gh-api-port (conf/config) port)
             schedules (atom {})
             db (async/chan 10)
-            server (#'sut/start-management-api cfg schedules db)]
+            server (#'sut/start-management-api config schedules db)]
         (try
-          (t/is (= 503 (:status (http/get (format "http://localhost:%d/health" (:management-api-port cfg)) {:throw-exceptions false}))))
+          (t/is (= 503 (:status (http/get (format "http://localhost:%d/health" (:management-api-port config)) {:throw-exceptions false}))))
           (finally
             (#'sut/stop-management-api server)
             (doseq [[key {:keys [stop-fn]}] @schedules]
               (stop-fn)))))))
-  (t/testing "that /schedules endpoint returns 201/Created in response to a well-formed PUT request"
+  (t/testing "that PUT /schedules endpoint returns 201/Created in response to a well-formed PUT request"
     (fake/with-routes!
       {"/graphql" {:status 200
                    :headers {}
@@ -50,12 +51,12 @@
             org "test-org1"
             repo "test-repo1"
             last 20
-            cfg (fix-gh-api-port (conf/config) port)
+            config (fix-gh-api-port (conf/config) port)
             schedules (atom {})
             db (async/chan 10)
-            server (#'sut/start-management-api cfg schedules db)]
+            server (#'sut/start-management-api config schedules db)]
         (try
-          (t/is (= 201 (:status (http/put (format "http://localhost:%d/schedules/%s/%s" (:management-api-port cfg) org repo)
+          (t/is (= 201 (:status (http/put (format "http://localhost:%d/schedules/%s/%s" (:management-api-port config) org repo)
                                           {:throw-exceptions false
                                            :accept :json
                                            :content-type :json
@@ -63,4 +64,36 @@
           (finally
             (#'sut/stop-management-api server)
             (doseq [[key {:keys [stop-fn]}] @schedules]
-              (stop-fn))))))))
+              (stop-fn)))))))
+  (t/testing "that DELETE /schedules endpoint returns 404/Not Found if no matching schedule exists"
+    (let [org "test-org2"
+          repo "test-repo2"
+          config {:management-api-port 54333}
+          db (async/chan 10)
+          schedules (atom {})
+          server (#'sut/start-management-api config schedules db)]
+      (try
+        (t/is (= 404 (:status (http/delete (format "http://localhost:%d/schedules/%s/%s" (:management-api-port config) org repo)
+                                           {:throw-exceptions false
+                                            :accept :json}))))
+        (finally
+          (#'sut/stop-management-api server)))))
+  (t/testing "that DELETE /schedules endpoint returns 200/OK if matching schedule exists"
+    (let [interval-ms 100
+          org "test-org3"
+          repo "test-repo3"
+          last 20
+          config {:management-api-port 45345}
+          schedules (atom {})
+          db (async/chan 10)
+          schedule (task/make-scheduler schedules db config)
+          sched (schedule interval-ms org repo last)
+          server (#'sut/start-management-api config schedules db)]
+      (try
+        (t/is (= 200 (:status (http/delete (format "http://localhost:%d/schedules/%s/%s" (:management-api-port config) org repo)
+                                           {:throw-exceptions false
+                                            :accept :json}))))
+        (finally
+          (#'sut/stop-management-api server)
+          (doseq [[key {:keys [stop-fn]}] @schedules]
+            (stop-fn)))))))

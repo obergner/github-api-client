@@ -6,11 +6,9 @@
   (:import (org.rocksdb RocksDB Options)))
 
 (defn- make-rocksdb
-  "Create a new `RocksDB` instance using the supplied `config`.
-  Return `[db options]`, where `db` is the newly created `RocksDB`
-  instance and `options` the `org.rocksdb.Options` instance used
-  to create `db`. Return `options` as well since it is backed by
-  a C++ object (off-heap) that needs to be closed."
+  "Create a new `RocksDB` instance using the supplied `config`. Return `[db options]`, where `db` is the newly created
+  `RocksDB` instance and `options` the `org.rocksdb.Options` instance used to create `db`. Return `options` as well
+  since it is backed by a C++ object (off-heap) that needs to be closed."
   [{:keys [rocksdb-path]}]
   (let [options (-> (Options.)
                     (.setCreateIfMissing true))
@@ -19,11 +17,12 @@
     [rocksdb options]))
 
 (defn- start-rocksdb
-  "Start a go routine that opens a new `RocksDB` instance using the supplied
-  `config` to initialise it, then loops waiting for key-value pairs to store.
+  "Start a go routine that opens a new `RocksDB` instance using the supplied `config` to initialise it. Return a
+  `clojure.core.async` `channel`. The go routine started by this function will loop, on each turn pulling a message
+  from this `channel`, one of
 
-  If the go routine started by this function receives message `:terminate` on
-  `dbchan` it will shut down its `RocksDB` instance and terminate its loop."
+  - `:terminate`:                  tell the go routine to break out of its loop and closed its `RocksDB` instance
+  - `[^String key ^String value]`: store `value` under `key` in its `RocksDB` instance."
   [config]
   (let [db-chan (async/chan 10)]
     (async/go
@@ -44,8 +43,7 @@
     db-chan))
 
 (defn- stop-rocksdb
-  "Stop go routine managing our `RocksDB` instance, closing that instance.
-  Returns `true`."
+  "Stop go routine managing our `RocksDB` instance, closing that instance. Returns `true`."
   [db-chan]
   (async/>!! db-chan :terminate)
   true)
@@ -55,10 +53,7 @@
   :stop (stop-rocksdb db))
 
 (defn put
-  "Store `value` under `key` in backing store.
-  Returns `value`.
-  This function must not be called from an IOC thread but
-  only from a regular thread."
+  "Store `value` under `key` in backing store. Returns `value`."
   [db key value]
   (async/>!! db [key value])
   value)

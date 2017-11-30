@@ -30,7 +30,10 @@ might find useful:
  * (check-health):
      call GitHub API Client's /health endpoint
  * (put-schedule interval-ms org repo last):
-     call GitHub API Client's /schedules endpoint, equivalent to (schedule ....) above
+     PUT call to GitHub API Client's /schedules endpoint, equivalent to (schedule ....)
+     above
+ * (delete-schedule org repo):
+     DELETE call to GitHub API Client's /schedules endpoint 
 
 Enjoy
 -----------------------------------------------------------------------------------------
@@ -71,3 +74,9 @@ Enjoy
                    :content-type :json
                    :body (format "{\"interval-ms\": %d, \"last\": %d}" interval-ms last)})))
 
+(defn delete-schedule
+  [org repo]
+  (let [port (:management-api-port conf/conf)
+        uri (format "http://localhost:%d/schedules/%s/%s" port org repo)]
+    (http/delete uri {:throw-exceptions false
+                      :accept :json})))

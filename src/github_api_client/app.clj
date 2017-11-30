@@ -8,11 +8,11 @@
             [clojure.tools.logging :as log]))
 
 (defn- manifest-map
-  "Return the `mainAttributes` of file `META-INF/MANIFEST.MF` located in the jar
-  the class named `class-name` is part of, as a map.
+  "Return the `mainAttributes` of file `META-INF/MANIFEST.MF` located in the jar the class named `class-name` is part
+  of, as a map.
 
-  Note that looking up `class-name`'s `MANIFEST.MF` will fail if the class named `class-name`
-  is not stored in a jar file. In this case, return an empty map."
+  Note that looking up `class-name`'s `MANIFEST.MF` will fail if the class named `class-name` is not stored in a jar
+  file. Or if it simply does not exist. In this case, return an empty map."
   [class-name]
   (try
     (->> (str "jar:"
@@ -51,9 +51,12 @@
 (defn- start-app
   "Start this application by starting all supplied subsystems in order.
 
-  Return a `clojure.core.async` `channel` that will produce exactly one message - `nil` - if the task
-  scheduler started by calling this function has shut down. This channel is intended to be blocked on
-  by the main thread to prevent the process from exiting immediately."
+  Return  `{:stop-fn stop-fn stop-chan :stop-chan ...}` where
+
+  - `stop-chan` is a `clojure.core.async` `channel` that will produce exactly one message - `nil` - if the task
+    scheduler started by calling this function has shut down. This channel is intended to be blocked on by the main
+    thread to prevent the process from exiting immediately.
+  - `stop-fn` is a no-args function that cancels the started task and effectively terminates this application."
   [config params db schedules management-api]
   (let [{:keys [log-interval-ms gh-org gh-repo gh-prs-last]} params
         schedule (task/make-scheduler schedules db config)]

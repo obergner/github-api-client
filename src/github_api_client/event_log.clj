@@ -5,10 +5,8 @@
             [clojure.tools.logging :as log]))
 
 (defn pull-requests-logger
-  "Using supplied `db` and `config` create and return a function that takes
-  organization `org`, repository `repo` and number `last` and
-  looks up the latest `last` pull requests in `repo` belonging tools
-  `organization`, storing them in our event log."
+  "Using supplied `db` and `config` return a function that takes organization `org`, repository `repo` and number `last`
+  and looks up the latest `last` pull requests in `repo` belonging tools `organization`, storing them in our event log."
   [db config]
   (fn [org repo last]
     (log/infof "Storing last [%d] pull requests in [organization: %s|repo: %s] in event log ..." last org repo)

@@ -15,7 +15,7 @@ ENV LOG_INTERVAL_MS 60000
 ENV GH_API_URL https://api.github.com/graphql
 ENV GH_API_TOKEN DUMMY
 ENV GH_ORG obergner
-ENV GH_REPO camelpe
+ENV GH_REPO github-api-client
 ENV GH_PRS_LAST 3
 ENV ROCKSDB_PATH /app/db
 ENV MANAGEMENT_API_PORT ${managementApiPort}

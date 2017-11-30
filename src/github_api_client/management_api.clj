@@ -39,22 +39,37 @@
             :repository repo
             :last last}}))
 
+(defn- delete-schedule
+  [org repo schedules]
+  (log/infof "RCVD: management API request to delete schedule [%s/%s]" org repo)
+  (if (task/cancel-schedule org repo schedules)
+    {:status 200
+     :headers {"Content-Type" "application/json"}
+     :body {:status 200
+            :message "DELETED"}}
+    {:status 404
+     :headers {"Content-Type" "application/json"}
+     :body {:status 404
+            :message "Not Found"}}))
+
 (defn- management-api-routes
-  "Define and return management API `compojure` routes, as a `Ring` handler. Use `config` hash
-  to create and configure `github-api-client.github-api` clients."
+  "Define and return management API `compojure` routes, as a `Ring` handler. Use `config` hash to create and configure
+  `github-api-client.github-api` clients."
   [config schedules db]
   (com/routes
    (com/GET "/health" []
      (check-health config))
    (com/PUT "/schedules/:org/:repo" [org repo :as {payload :body}]
      (put-schedule payload org repo schedules db config))
+   (com/DELETE "/schedules/:org/:repo" [org repo]
+     (delete-schedule org repo schedules))
    (route/not-found
     {:status 404
      :message "Resource not found"})))
 
 (defn- management-api-app
-  "Define and return management API `Ring` application, using `config` hash to configure
-  `github-api-client.github-api` clients."
+  "Define and return management API `Ring` application, using `config` hash to configure`github-api-client.github-api`
+  clients."
   [config schedules db]
   (-> (management-api-routes config schedules db)
       alog/wrap-with-logger
@@ -62,9 +77,8 @@
       mjson/wrap-json-body))
 
 (defn- ^Server start-management-api
-  "Start an embedded `Jetty` instance serving our management API, using the `config`
-  hash to configure port and access to GitHub API.
-  Return an `org.eclipse.jetty.server.Server` instance that may be stopped by calling `.stop` on it."
+  "Start an embedded `Jetty` instance serving our management API, using the `config` hash to configure port and access
+  to GitHub API. Return an `org.eclipse.jetty.server.Server` instance that may be stopped by calling `.stop` on it."
   [{:keys [management-api-port], :as config} schedules db]
   (log/infof "Starting management API on port [%s], using config [%s] ..." management-api-port config)
   (let [management-api (jetty/run-jetty (management-api-app config schedules db) {:port management-api-port :join? false})]

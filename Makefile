@@ -37,7 +37,7 @@ doc:
 
 # Build the container
 image: package
-	docker build \
+	@docker build \
          --build-arg version=$(VERSION) \
          --build-arg port=$(PORT) \
          --build-arg managementApiPort=$(MANAGEMENT_API_PORT) \
@@ -47,7 +47,7 @@ image: package
 build: test container
 
 run: ## Run container
-	docker run -i -t --rm \
+	@docker run -i -t --rm \
          --env-file=./config.env \
          --env=GH_API_TOKEN=$(ACCESS_TOKEN) \
          --publish=$(PORT):$(PORT) \
@@ -58,7 +58,7 @@ run: ## Run container
 up: build run ## Run container on port configured in `config.env` (Alias to run)
 
 stop: ## Stop and remove a running container
-	docker stop $(APP_NAME); docker rm $(APP_NAME)
+	@docker stop $(APP_NAME); docker rm $(APP_NAME)
 
 # HELPERS
 

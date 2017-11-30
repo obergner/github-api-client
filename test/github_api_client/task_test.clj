@@ -44,7 +44,6 @@
           interval-ms 1000000
           org "org3"
           repo "repo3"
-          expected-key (str org "/" repo)
           new-schedule (schedule interval-ms org repo 1)]
       (try
         (t/is (= interval-ms (:interval-ms new-schedule)))
@@ -63,7 +62,6 @@
           interval-ms 10
           org "org4"
           repo "repo4"
-          expected-key (str org "/" repo)
           old-schedule (schedule interval-ms org repo 1)
           new-schedule (schedule interval-ms org repo 2)]
       (try
@@ -72,3 +70,26 @@
           ((:stop-fn old-schedule)) ;; just to make sure
           ((:stop-fn new-schedule))
           (#'storage/stop-rocksdb db))))))
+
+(t/deftest cancel-schedule
+  (t/testing "that cancel-schedule returns true if there is a matching scheduled task"
+    (let [schedules (atom {})
+          config {:gh-api-url "test"
+                  :gh-api-token "test"
+                  :rocksdb-path "./target/.test3.db"}
+          db (#'storage/start-rocksdb config)
+          schedule (sut/make-scheduler schedules db config)
+          interval-ms 1000000
+          org "cancel-schedule-org1"
+          repo "cancel-schedule-repo1"
+          new-schedule (schedule interval-ms org repo 1)]
+      (try
+        (t/is (= true (sut/cancel-schedule org repo schedules)))
+        (finally
+          ((:stop-fn new-schedule)) ;; just to be on the safe side
+          (#'storage/stop-rocksdb db)))))
+  (t/testing "that cancel-schedule returns false if there is no matching scheduled task"
+    (let [schedules (atom {})
+          org "cancel-schedule-org2"
+          repo "cancel-schedule-repo2"]
+      (t/is (= false (sut/cancel-schedule org repo schedules))))))
