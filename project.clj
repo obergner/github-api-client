@@ -46,11 +46,11 @@
                           :repl-options {:init-ns user}
                           :injections [(require 'pjstadig.humane-test-output)
                                        (pjstadig.humane-test-output/activate!)]
-                          :env {:log-interval-ms "60000"
+                          :env {:log-interval-ms "180000"
                                 :gh-api-url "https://api.github.com/graphql"
                                 :gh-org "obergner"
                                 :gh-repo "github-api-client"
-                                :gh-prs-last "5"
+                                :gh-prs-last "2"
                                 :rocksdb-path "./target/dev.db"
                                 :management-api-port "2200"}}
              :dev-private {:env {:gh-api-token "overridden-in-profile.clj"}}

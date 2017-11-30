@@ -64,7 +64,7 @@
       (when-let [{:keys [stop-fn]} (get @schedules key)]
         (stop-fn))
       (let [[stop-fn stop-chan] (schedule-event-log interval-ms org repo last db config)
-            new-schedule {:stop-fn stop-fn :stop-chan stop-chan :interval-ms interval-ms}]
+            new-schedule {:stop-fn stop-fn :stop-chan stop-chan :interval-ms interval-ms :last last}]
         (get (swap! schedules #(update-in % [key] (constantly new-schedule))) key)))))
 
 (defn cancel-schedule

@@ -17,21 +17,21 @@ ACCESS_TOKEN := $(shell cat profiles.clj | sed -n 's/.*:gh-api-token "\(.*\)".*/
 
 # Clean output
 clean:
-	lein clean
+	@lein clean
 
 # Run tests
 .PHONY: test
 test:
-	lein test
+	@lein test
 
 # Create executable uberjar
 package:
-	lein uberjar
+	@lein uberjar
 
 # Create documentation
 .PHONY: doc
 doc:
-	lein doc
+	@lein doc
 
 # DOCKER TASKS
 

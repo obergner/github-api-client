@@ -44,9 +44,11 @@
           interval-ms 1000000
           org "org3"
           repo "repo3"
-          new-schedule (schedule interval-ms org repo 1)]
+          last 3
+          new-schedule (schedule interval-ms org repo last)]
       (try
         (t/is (= interval-ms (:interval-ms new-schedule)))
+        (t/is (= last (:last new-schedule)))
         (t/is (t/function?  (:stop-fn new-schedule)))
         (t/is (satisfies? clojure.core.async.impl.protocols/Channel (:stop-chan new-schedule)))
         (finally

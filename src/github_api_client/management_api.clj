@@ -52,6 +52,16 @@
      :body {:status 404
             :message "Not Found"}}))
 
+(defn- get-schedules
+  [schedules]
+  (log/debugf "RCVD: management API request to list all schedules")
+  (let [all-schedules
+        (into {} (for [[k {:keys [interval-ms last]}] @schedules] [k {:interval-ms interval-ms :last last}]))]
+    {:status 200
+     :headers {"Content-Type" "application/json"}
+     :body {:status 200
+            :schedules all-schedules}}))
+
 (defn- management-api-routes
   "Define and return management API `compojure` routes, as a `Ring` handler. Use `config` hash to create and configure
   `github-api-client.github-api` clients."
@@ -59,6 +69,8 @@
   (com/routes
    (com/GET "/health" []
      (check-health config))
+   (com/GET "/schedules" []
+     (get-schedules schedules))
    (com/PUT "/schedules/:org/:repo" [org repo :as {payload :body}]
      (put-schedule payload org repo schedules db config))
    (com/DELETE "/schedules/:org/:repo" [org repo]

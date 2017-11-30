@@ -29,6 +29,9 @@ might find useful:
      every `interval-ms` milliseconds
  * (check-health):
      call GitHub API Client's /health endpoint
+ * (get-schedules):
+     GET call to GitHub API Client's /schedules endpoint, to get the list of all
+     scheduled tasks
  * (put-schedule interval-ms org repo last):
      PUT call to GitHub API Client's /schedules endpoint, equivalent to (schedule ....)
      above
@@ -64,6 +67,13 @@ Enjoy
         uri (format "http://localhost:%d/health" port)]
     (http/get uri {:accept :json
                    :throw-exceptions false})))
+
+(defn get-schedules
+  []
+  (let [port (:management-api-port conf/conf)
+        uri (format "http://localhost:%d/schedules" port)]
+    (http/get uri {:throw-exceptions false
+                   :accept :json})))
 
 (defn put-schedule
   [interval-ms org repo last]
