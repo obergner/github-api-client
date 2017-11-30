@@ -8,9 +8,9 @@
     </encoder>
   </appender>
 
-  <logger name="org.eclipse.jetty" level="INFO"/>
+  <logger name="org.eclipse.jetty" level="WARN"/>
 
-  <root level="DEBUG">
+  <root level="ERROR">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>

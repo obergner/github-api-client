@@ -4,6 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-environ "1.1.0"]
+            [lein-cljfmt "0.5.7"]
             [lein-marginalia "0.9.1"]]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.async "0.3.465"]

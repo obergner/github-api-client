@@ -8,10 +8,33 @@
             [clj-http.client :as http]
             [github-api-client.management-api :as management-api]
             [mount.core :as mount]
-            [mount-up.core :as mu]
-            [cheshire.core :as json]))
+            [mount-up.core :as mu]))
 
 (mu/on-upndown :info mu/log :before)
+
+(println
+ "
+-----------------------------------------------------------------------------------------
+Welcome to GitHub API Client's REPL. Here's an overview of some custom commands you
+might find useful:
+
+ * (start):
+     start GitHub API Client, including all subsystems
+ * (stop):
+     stop GitHub API Client, taking care to stop all subsystems in reverse startup order
+ * (restart):
+     stop, then start again
+ * (schedule interval-ms org repo last):
+     schedule importing last `last` pull requests from GitHub repository `org`/`repo`
+     every `interval-ms` milliseconds
+ * (check-health):
+     call GitHub API Client's /health endpoint
+ * (put-schedule interval-ms org repo last):
+     call GitHub API Client's /schedules endpoint, equivalent to (schedule ....) above
+
+Enjoy
+-----------------------------------------------------------------------------------------
+")
 
 (defn start
   []

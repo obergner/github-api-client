@@ -36,12 +36,15 @@ doc:
 # DOCKER TASKS
 
 # Build the container
-build: test package
+image: package
 	docker build \
          --build-arg version=$(VERSION) \
          --build-arg port=$(PORT) \
          --build-arg managementApiPort=$(MANAGEMENT_API_PORT) \
          -t $(APP_NAME):$(VERSION) .
+
+# Build the container
+build: test container
 
 run: ## Run container
 	docker run -i -t --rm \

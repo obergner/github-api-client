@@ -12,37 +12,45 @@
             [clojure.tools.logging :as log])
   (:import (org.eclipse.jetty.server Server)))
 
+(defn- check-health
+  [config]
+  (let [commit-type-client (api/commit-type-client config)]
+    (try
+      (commit-type-client)
+      {:status 200
+       :body {:status "OK"}}
+      (catch Exception e
+        (log/errorf "Health check failed: %s" (.getMessage e))
+        {:status 503
+         :body {:status "Service Temporarily Unavailable"
+                :message "GitHub API does not respond"}}))))
+
+(defn- put-schedule
+  [payload org repo schedules db config]
+  (let [interval-ms (get payload "interval-ms")
+        last (get payload "last")
+        schedule (task/make-scheduler schedules db config)
+        sched (schedule interval-ms org repo last)]
+    (log/infof "RCVD: management API request to schedule [%s/%s last %d every %d ms]" org repo last interval-ms)
+    {:status 201
+     :headers {"Content-Type" "application/json"}
+     :body {:interval-ms interval-ms
+            :organization org
+            :repository repo
+            :last last}}))
+
 (defn- management-api-routes
   "Define and return management API `compojure` routes, as a `Ring` handler. Use `config` hash
   to create and configure `github-api-client.github-api` clients."
   [config schedules db]
-  (let [commit-type-client (api/commit-type-client config)
-        schedule (task/make-scheduler schedules db config)]
-    (com/routes
-     (com/GET "/health" []
-       (try
-         (commit-type-client)
-         {:status 200
-          :body {:status "OK"}}
-         (catch Exception e
-           (log/errorf "Health check failed: %s" (.getMessage e))
-           {:status 503
-            :body {:status "Service Temporarily Unavailable"
-                   :message "GitHub API does not respond"}})))
-     (com/PUT "/schedules/:org/:repo" [org repo :as {payload :body}]
-       (let [interval-ms (get payload "interval-ms")
-             last (get payload "last")
-             sched (schedule interval-ms org repo last)]
-         (log/infof "RCVD: management API request to schedule [%s/%s last %d every %d ms]" org repo last interval-ms)
-         {:status 201
-          :headers {"Content-Type" "application/json"}
-          :body {:interval-ms interval-ms
-                 :organization org
-                 :repository repo
-                 :last last}}))
-     (route/not-found
-      {:status 404
-       :message "Resource not found"}))))
+  (com/routes
+   (com/GET "/health" []
+     (check-health config))
+   (com/PUT "/schedules/:org/:repo" [org repo :as {payload :body}]
+     (put-schedule payload org repo schedules db config))
+   (route/not-found
+    {:status 404
+     :message "Resource not found"})))
 
 (defn- management-api-app
   "Define and return management API `Ring` application, using `config` hash to configure
