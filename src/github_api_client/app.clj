@@ -58,10 +58,10 @@
     thread to prevent the process from exiting immediately.
   - `stop-fn` is a no-args function that cancels the started task and effectively terminates this application."
   [config params db schedules management-api]
-  (let [{:keys [log-interval-ms gh-org gh-repo gh-prs-last]} params
+  (let [{:keys [interval-ms org repo last]} params
         schedule (task/make-scheduler schedules db config)]
     (log-startup-banner "github_api_client.core")
-    (schedule log-interval-ms gh-org gh-repo gh-prs-last)))
+    (schedule interval-ms org repo last)))
 
 (defn- stop-app
   "Stop this application by stopping all subsystems in reverse startup order."

@@ -4,6 +4,13 @@
             [clojure.test :as t]
             [clojure.core.async :as async]))
 
+(defn- cleanup
+  [db & scheduled-tasks]
+  (doseq [{:keys [stop-fn]} scheduled-tasks]
+    (stop-fn))
+  (#'storage/stop-rocksdb db)
+  (async/close! db))
+
 (t/deftest schedule-event-log
   (t/testing "that function returned from schedule-event-log returns false when called"
     (let [config {:gh-api-url "test"
@@ -17,7 +24,8 @@
           [stop-fn stop-chan] (#'sut/schedule-event-log interval-ms org repo last db config)]
       (try
         (t/is (= false (stop-fn)))
-        (finally (#'storage/stop-rocksdb db)))))
+        (finally
+          (cleanup db)))))
   (t/testing "that channel returned from schedule-event-log publishes nil stop message"
     (let [config {:gh-api-url "test"
                   :gh-api-token "test"
@@ -31,7 +39,8 @@
       (try
         (stop-fn)
         (t/is (nil? (async/<!! stop-chan)))
-        (finally (#'storage/stop-rocksdb db))))))
+        (finally
+          (cleanup db))))))
 
 (t/deftest make-scheduler
   (t/testing "that function returned from make-scheduler returns hash containing proper schedule info"
@@ -52,8 +61,7 @@
         (t/is (t/function?  (:stop-fn new-schedule)))
         (t/is (satisfies? clojure.core.async.impl.protocols/Channel (:stop-chan new-schedule)))
         (finally
-          ((:stop-fn new-schedule))
-          (#'storage/stop-rocksdb db)))))
+          (cleanup db new-schedule)))))
   (t/testing "that schedule function stops previous schedule when overwriting it"
     (let [schedules (atom {})
           config {:gh-api-url "test"
@@ -69,9 +77,7 @@
       (try
         (t/is (nil? (async/<!! (:stop-chan old-schedule))))
         (finally
-          ((:stop-fn old-schedule)) ;; just to make sure
-          ((:stop-fn new-schedule))
-          (#'storage/stop-rocksdb db))))))
+          (cleanup db old-schedule new-schedule))))))
 
 (t/deftest cancel-schedule
   (t/testing "that cancel-schedule returns true if there is a matching scheduled task"
@@ -88,8 +94,7 @@
       (try
         (t/is (= true (sut/cancel-schedule org repo schedules)))
         (finally
-          ((:stop-fn new-schedule)) ;; just to be on the safe side
-          (#'storage/stop-rocksdb db)))))
+          (cleanup db new-schedule)))))
   (t/testing "that cancel-schedule returns false if there is no matching scheduled task"
     (let [schedules (atom {})
           org "cancel-schedule-org2"

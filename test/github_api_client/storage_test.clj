@@ -1,6 +1,7 @@
 (ns github-api-client.storage-test
   (:require [github-api-client.storage :as sut]
-            [clojure.test :as t]))
+            [clojure.test :as t]
+            [clojure.core.async :as async]))
 
 (t/deftest make-rocksdb
   (t/testing "that make-rocksdb returns tuple of RocksDB and Options"
@@ -15,7 +16,9 @@
     (let [db-chan (#'sut/start-rocksdb {:rocksdb-path "./target/.start-stop-rocksdb-test.db"})]
       (try
         (t/is (instance? clojure.core.async.impl.channels.ManyToManyChannel db-chan))
-        (finally (#'sut/stop-rocksdb db-chan))))))
+        (finally
+          (#'sut/stop-rocksdb db-chan)
+          (async/close! db-chan))))))
 
 (t/deftest put-key-value
   (t/testing "that after start-rocksdb we can put at least 20 key-value pairs"
@@ -24,4 +27,6 @@
         (doseq [kv (range 0 20)]
           (sut/put db-chan (str kv) (str kv)))
         (t/is true)
-        (finally (#'sut/stop-rocksdb db-chan))))))
+        (finally
+          (#'sut/stop-rocksdb db-chan)
+          (async/close! db-chan))))))
