@@ -6,6 +6,8 @@
             [ring.adapter.jetty :as jetty]
             [github-api-client.conf :as conf]
             [github-api-client.github-api :as api]
+            [github-api-client.task :as task]
+            [github-api-client.storage :as storage]
             [mount.core :as mount]
             [clojure.tools.logging :as log])
   (:import (org.eclipse.jetty.server Server)))
@@ -13,8 +15,9 @@
 (defn- management-api-routes
   "Define and return management API `compojure` routes, as a `Ring` handler. Use `config` hash
   to create and configure `github-api-client.github-api` clients."
-  [config]
-  (let [commit-type-client (api/commit-type-client config)]
+  [config schedules db]
+  (let [commit-type-client (api/commit-type-client config)
+        schedule (task/make-scheduler schedules db config)]
     (com/routes
      (com/GET "/health" []
        (try
@@ -26,6 +29,17 @@
            {:status 503
             :body {:status "Service Temporarily Unavailable"
                    :message "GitHub API does not respond"}})))
+     (com/PUT "/schedules/:org/:repo" [org repo :as {payload :body}]
+       (let [interval-ms (get payload "interval-ms")
+             last (get payload "last")
+             sched (schedule interval-ms org repo last)]
+         (log/infof "RCVD: management API request to schedule [%s/%s last %d every %d ms]" org repo last interval-ms)
+         {:status 201
+          :headers {"Content-Type" "application/json"}
+          :body {:interval-ms interval-ms
+                 :organization org
+                 :repository repo
+                 :last last}}))
      (route/not-found
       {:status 404
        :message "Resource not found"}))))
@@ -33,8 +47,8 @@
 (defn- management-api-app
   "Define and return management API `Ring` application, using `config` hash to configure
   `github-api-client.github-api` clients."
-  [config]
-  (-> (management-api-routes config)
+  [config schedules db]
+  (-> (management-api-routes config schedules db)
       alog/wrap-with-logger
       mjson/wrap-json-response
       mjson/wrap-json-body))
@@ -43,9 +57,9 @@
   "Start an embedded `Jetty` instance serving our management API, using the `config`
   hash to configure port and access to GitHub API.
   Return an `org.eclipse.jetty.server.Server` instance that may be stopped by calling `.stop` on it."
-  [{:keys [management-api-port], :as config}]
+  [{:keys [management-api-port], :as config} schedules db]
   (log/infof "Starting management API on port [%s], using config [%s] ..." management-api-port config)
-  (let [management-api (jetty/run-jetty (management-api-app config) {:port management-api-port :join? false})]
+  (let [management-api (jetty/run-jetty (management-api-app config schedules db) {:port management-api-port :join? false})]
     management-api))
 
 (defn- stop-management-api
@@ -55,5 +69,5 @@
   (.stop server))
 
 (mount/defstate management-api
-  :start (start-management-api conf/conf)
+  :start (start-management-api conf/conf task/schedules storage/db)
   :stop (stop-management-api management-api))

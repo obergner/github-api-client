@@ -5,9 +5,11 @@
             [github-api-client.storage :as storage]
             [github-api-client.event-log :as event-log]
             [github-api-client.task :as task]
+            [clj-http.client :as http]
             [github-api-client.management-api :as management-api]
             [mount.core :as mount]
-            [mount-up.core :as mu]))
+            [mount-up.core :as mu]
+            [cheshire.core :as json]))
 
 (mu/on-upndown :info mu/log :before)
 
@@ -25,8 +27,24 @@
   (mount/start))
 
 (defn schedule
-  [log-interval-ms gh-org gh-repo gh-prs-last]
+  [interval-ms org repo last]
   (let [do-schedule (task/make-scheduler task/schedules storage/db conf/conf)
-        sched (do-schedule log-interval-ms gh-org gh-repo gh-prs-last)]
+        sched (do-schedule interval-ms org repo last)]
     sched))
+
+(defn check-health
+  []
+  (let [port (:management-api-port conf/conf)
+        uri (format "http://localhost:%d/health" port)]
+    (http/get uri {:accept :json
+                   :throw-exceptions false})))
+
+(defn put-schedule
+  [interval-ms org repo last]
+  (let [port (:management-api-port conf/conf)
+        uri (format "http://localhost:%d/schedules/%s/%s" port org repo)]
+    (http/put uri {:throw-exceptions false
+                   :accept :json
+                   :content-type :json
+                   :body (format "{\"interval-ms\": %d, \"last\": %d}" interval-ms last)})))
 
