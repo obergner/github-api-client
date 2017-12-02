@@ -73,7 +73,7 @@ docker run -i -t --rm \
 12:25:05.963 [main                ] INFO                         mount-up.core - >> starting.. #'github-api-client.task/schedules
 12:25:05.963 [main                ] INFO                         mount-up.core - >> starting.. #'github-api-client.management-api/management-api
 12:25:05.972 [async-dispatch-1    ] INFO             github-api-client.storage - Starting RocksDB persistence service
-12:25:05.973 [main                ] INFO      github-api-client.management-api - Starting management API on port [3100], using config [{:gh-api-url "https://api.github.com/graphql", :gh-api-token "54219fe2f3209a8f461de044b1e493f93c9a2b23", :rocksdb-path "/app/db", :management-api-port 3100}] ...
+12:25:05.973 [main                ] INFO      github-api-client.management-api - Starting management API on port [3100], using config [{:gh-api-url "https://api.github.com/graphql", :gh-api-token "YOUR_API_TOKEN", :rocksdb-path "/app/db", :management-api-port 3100}] ...
 12:25:06.035 [main                ] INFO       org.eclipse.jetty.server.Server - jetty-9.2.z-SNAPSHOT
 12:25:06.355 [main                ] INFO      o.e.jetty.server.ServerConnector - Started ServerConnector@58d4f783{HTTP/1.1}{0.0.0.0:3100}
 12:25:06.355 [main                ] INFO       org.eclipse.jetty.server.Server - Started @3067ms
