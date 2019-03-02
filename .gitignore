@@ -5,3 +5,5 @@
 /.nrepl-port
 /profiles.clj
 /token.sec
+/.idea
+*.iml

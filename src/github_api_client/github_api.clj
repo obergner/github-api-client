@@ -82,5 +82,6 @@
     (log/infof "Fetching last [%d] pull requests from [%s/%s] ..." last login repo)
     (let [resp (do-query config q-pull-request-info {:login login :repo repo :last last})
           prs (map #(% :node) (get-in resp [:organization :repository :pullRequests :edges]))]
+      (log/infof "RESP: %s" resp)
       (log/infof "[DONE] [%s/%s last %d] -> [%d pull requests]" login repo last (count prs))
       prs)))
