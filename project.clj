@@ -13,7 +13,7 @@
                  [environ "1.1.0"]
                  [cheshire "5.8.1"]
                  [clj-http "3.9.1" :exclusions [commons-logging/commons-logging]]
-                 [org.rocksdb/rocksdbjni "5.8.6"]
+                 [org.rocksdb/rocksdbjni "5.17.2"]
                  [compojure "1.6.1"]
                  [ring/ring-core "1.7.1"]
                  [ring/ring-jetty-adapter "1.7.1"]

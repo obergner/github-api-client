@@ -1,4 +1,4 @@
-<configuration>
+<configuration scan="true" scanPeriod="10 seconds">
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <!-- encoders are assigned the type
@@ -7,6 +7,9 @@
       <pattern>%d{HH:mm:ss.SSS} [%-20.20thread] %-5level %36.36logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
+
+  <logger name="org.apache.http" level="INFO"/>
+  <logger name="org.apache.http.wire" level="INFO"/>
 
   <root level="INFO">
     <appender-ref ref="STDOUT" />
